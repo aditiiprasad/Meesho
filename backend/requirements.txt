@@ -1,0 +1,11 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+pydantic==2.7.4
+sqlalchemy==2.0.30
+python-dotenv==1.0.1
+psycopg2-binary
+redis
+google-generativeai
+numpy
+scikit-learn
+cloudinary
