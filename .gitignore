@@ -4,6 +4,7 @@ backend/__pycache__/
 backend/.env
 backend/.pytest_cache/
 *.pyc
+backend/static/
 
 # Frontend (if root gitignore is needed)
 frontend/node_modules/
