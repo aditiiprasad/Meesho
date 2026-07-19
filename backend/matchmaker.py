@@ -292,7 +292,21 @@ async def check_waiting_pool():
                 ads_generated += 1
                 
         if ads_generated == 0:
-            await broadcast_log("[Safety Layer] No valid trios found (all products in active ads or insufficient templates).")
+            await broadcast_log("[Safety Layer] Strict templates failed. Attempting wildcard match...")
+            safe_wildcards = [p for p in products if p.id not in active_product_ids]
+            if len(safe_wildcards) >= 3:
+                best_trio = safe_wildcards[:3]
+                trio_budgets = [budgets[p.id] for p in best_trio]
+                best_budget = sum(trio_budgets)
+                await broadcast_log(f"[Optimization Engine] Wildcard trio selected.")
+                trio_ids = [p.id for p in best_trio]
+                await broadcast_log(f"[Matchmaker] Synergy found! Forming trio with IDs {trio_ids} (Total Budget: Rs.{best_budget:.2f})")
+                db.query(WaitingProduct).filter(WaitingProduct.product_id.in_(trio_ids)).delete(synchronize_session=False)
+                db.commit()
+                asyncio.create_task(generate_combo_ad(trio_ids, trio_budgets))
+                ads_generated += 1
+            else:
+                await broadcast_log("[Safety Layer] No valid trios found (all products in active ads or insufficient products).")
             
     except Exception as e:
         print(f"Error in check_waiting_pool: {e}")
