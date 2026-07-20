@@ -45,5 +45,46 @@ The foundation of the Jodi Maker is built, but the potential to expand this ecos
 4. **Performance Analytics Dashboard**: Provide small sellers with detailed analytics showing which specific "Jodis" (partnerships) yield the highest CTR and conversion rates.
 5. **Cross-Category Syndication**: Expand semantic matching to pair physical products with digital services (e.g., pairing a yoga mat with a subscription to a local online yoga class).
 
+## 🚀 How to Run Locally
+
+### 1. Prerequisites
+- **Node.js** (v16+ recommended)
+- **Python** (3.11+ recommended)
+- API Keys for **Google Gemini**, **Cloudinary**, **Neon (PostgreSQL)**, and **Upstash (Redis)**.
+
+### 2. Backend Setup
+```bash
+cd backend
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/Scripts/activate # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create a .env file and add your credentials
+# GEMINI_API_KEY=...
+# DATABASE_URL=...
+# REDIS_URL=...
+# CLOUDINARY_URL=...
+
+# Run the FastAPI server
+uvicorn main:app --reload
+```
+*The backend will run on `http://localhost:8000`*
+
+### 3. Frontend Setup
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+```
+*The frontend will run on `http://localhost:5173`*
+
 ---
 *The Meesho Ad-Pool democratizes visibility. It proves that when small sellers collaborate, they can compete with anyone.*
