@@ -10,50 +10,45 @@ import CustomerFeed from './pages/CustomerFeed';
 
 function Home() {
     return (
-        <div className="min-h-screen flex flex-col bg-[#410F29] relative overflow-hidden font-sans">
+        <div className="min-h-screen flex flex-col bg-[#F8F6F0] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] relative overflow-hidden font-sans">
             
-            {/* Background Glow Blobs */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#095955] rounded-full filter blur-[120px] opacity-40 mix-blend-screen pointer-events-none z-0"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#F47216] rounded-full filter blur-[120px] opacity-40 mix-blend-screen pointer-events-none z-0"></div>
-
             {/* Header */}
-            <header className="relative z-50 mt-4 mx-4 md:mt-8 md:mx-12 bg-white/90 backdrop-blur-md border border-white/20 rounded-2xl md:rounded-full shadow-lg px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all">
+            <header className="relative z-50 mt-4 mx-4 md:mt-8 md:mx-12 bg-[#410F29] border-[3px] border-black rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all">
                 <div className="flex flex-col items-center md:items-start">
                     <div className="flex flex-wrap items-baseline gap-2 justify-center md:justify-start">
-                        <span className="text-3xl md:text-4xl text-[#410F29] font-bold tracking-tight">meesho</span>
-                        <span className="text-xl md:text-2xl text-[#095955] font-medium tracking-tight">ad ne bana di jodi</span>
+                        <span className="text-3xl md:text-4xl text-[#F8F6F0] font-black tracking-tighter uppercase">meesho</span>
+                        <span className="text-xl md:text-2xl text-[#F47216] font-bold tracking-tight">AD NE BANA DI JODI</span>
                     </div>
-                    <div className="mt-1 text-base md:text-lg font-black tracking-tight">
-                        <span className="text-[#410F29]">ScriptedBy</span>
-                        <span className="text-[#d946ef]">{'{'}Her{'}'}</span>
-                        <span className="text-[#eab308] ml-1.5">2.0</span>
+                    <div className="mt-1 text-sm md:text-base font-black tracking-wider uppercase">
+                        <span className="text-[#095955] bg-white px-2 py-0.5 rounded border-2 border-black mr-2">ScriptedBy</span>
+                        <span className="text-[#F8F6F0]">{'{}'}Her{'}'}</span>
+                        <span className="text-[#F47216] ml-1.5 border-b-2 border-[#F47216]">2.0</span>
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <a href="https://github.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#F47216] text-white font-medium rounded-full shadow-md hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#d96213] transition-all duration-300">GitHub</a>
-                    <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#095955] text-white font-medium rounded-full shadow-md hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#074643] transition-all duration-300">LinkedIn</a>
+                    <a href="https://github.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">GITHUB</a>
+                    <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#095955] text-[#F8F6F0] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F47216] transition-all">LINKEDIN</a>
                 </div>
             </header>
 
             {/* Main Content Area */}
             <main className="flex-grow flex flex-col items-center justify-center p-4 py-12 md:py-16 z-10 relative">
-                <div className="w-full max-w-2xl bg-[#F8F6F0]/95 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl overflow-hidden p-8 md:p-12 text-center flex flex-col items-center justify-center transition-all">
-                    <h2 className="text-3xl md:text-5xl leading-tight mb-8 font-extrabold flex flex-col gap-2">
-                        <span className="text-[#F47216]">welcome to</span>
-                        <span className="text-[#095955]">ad ne bana di jodi</span>
-                        <span className="text-[#F47216]">for</span>
-                        <span className="text-[#410F29]">meesho</span>
+                <div className="w-full max-w-2xl bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-3xl overflow-hidden p-8 md:p-12 text-center flex flex-col items-center justify-center transition-all">
+                    <h2 className="text-4xl md:text-6xl leading-none mb-8 font-black uppercase tracking-tighter flex flex-col gap-3">
+                        <span className="text-[#410F29]">WELCOME TO</span>
+                        <span className="text-[#095955] bg-[#095955]/10 py-2 border-y-4 border-black border-dashed">AD NE BANA DI JODI</span>
+                        <span className="text-[#410F29]">FOR <span className="text-[#F47216]">MEESHO</span></span>
                     </h2>
-                    <p className="text-[#410F29] mb-10 text-xl font-medium leading-relaxed max-w-lg text-opacity-90">
-                        The Agentic Jodi Maker, Pooling Micro-Budgets to Win Premium Ad Space.
+                    <p className="text-[#410F29] mb-10 text-xl font-bold leading-relaxed max-w-lg">
+                        THE AGENTIC JODI MAKER, POOLING MICRO-BUDGETS TO WIN PREMIUM AD SPACE.
                     </p>
 
                     <div className="space-y-4 w-full max-w-md">
-                        <Link to="/customer-login" className="block w-full py-4 px-4 rounded-full shadow-md text-lg font-semibold text-white bg-[#F47216] hover:-translate-y-1 hover:shadow-xl hover:bg-[#d96213] transition-all duration-300">
-                            Login as Customer
+                        <Link to="/customer-login" className="block w-full py-4 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xl font-black uppercase tracking-wider text-[#410F29] bg-[#F47216] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">
+                            LOGIN AS CUSTOMER
                         </Link>
-                        <Link to="/seller-login" className="block w-full py-4 px-4 rounded-full shadow-md text-lg font-semibold text-white bg-[#095955] hover:-translate-y-1 hover:shadow-xl hover:bg-[#074643] transition-all duration-300">
-                            Login as Seller
+                        <Link to="/seller-login" className="block w-full py-4 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xl font-black uppercase tracking-wider text-white bg-[#095955] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">
+                            LOGIN AS SELLER
                         </Link>
                     </div>
                 </div>
@@ -83,6 +78,28 @@ function BackendLogs() {
     const [selectedStep, setSelectedStep] = useState(null);
     const logsEndRef = useRef(null);
 
+    const [activeTab, setActiveTab] = useState('logs');
+    const [poolStatus, setPoolStatus] = useState({ waiting_pool: [], active_ads: [], queued_ads: [] });
+
+    const fetchPoolStatus = async () => {
+        try {
+            const url = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+            const res = await fetch(`${url}/api/pool/status`);
+            if (res.ok) {
+                const data = await res.json();
+                setPoolStatus(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch pool status", e);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchPoolStatus();
+        }
+    }, [isOpen]);
+
     useEffect(() => {
         const url = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/logs/stream` : 'http://127.0.0.1:8000/api/logs/stream';
         const eventSource = new EventSource(url);
@@ -96,6 +113,10 @@ function BackendLogs() {
             else if (msg.includes("[Creative Compositor]")) setActiveStep(3);
             else if (msg.includes("[Bidder]")) setActiveStep(4);
             else if (msg.includes("[Safety Layer]") || msg.includes("[Attribution]") || msg.includes("[System]")) setActiveStep(5);
+
+            if (msg.includes("[System]") || msg.includes("[Matchmaker]") || msg.includes("[Gatekeeper]") || msg.includes("[Attribution]")) {
+                fetchPoolStatus();
+            }
         };
 
         return () => eventSource.close();
@@ -165,13 +186,22 @@ function BackendLogs() {
                                 <Activity className="h-7 w-7 text-[#F8F6F0]" />
                                 Ad Ne Bana Di Jodi AI Orchestration Live
                             </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setActiveTab('logs')} className={`px-4 py-2 rounded-xl font-bold transition-all border-2 border-transparent ${activeTab === 'logs' ? 'bg-[#F47216] text-[#410F29]' : 'bg-[#F8F6F0]/20 text-[#F8F6F0] hover:border-[#F47216]'}`}>
+                                    Live Logs
+                                </button>
+                                <button onClick={() => { setActiveTab('visualise'); fetchPoolStatus(); }} className={`px-4 py-2 rounded-xl font-bold transition-all border-2 border-transparent ${activeTab === 'visualise' ? 'bg-[#F47216] text-[#410F29]' : 'bg-[#F8F6F0]/20 text-[#F8F6F0] hover:border-[#F47216]'}`}>
+                                    Visualise
+                                </button>
+                            </div>
                             <button onClick={() => setIsOpen(false)} className="text-[#F8F6F0] hover:text-[#F47216] p-2 rounded-xl border-[2px] border-transparent hover:border-[#F47216] hover:bg-[#F47216]/20 transition-all">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
 
-                        <div className="flex flex-1 overflow-hidden">
-                            {/* Left Side: Pipeline Visualization */}
+                        {activeTab === 'logs' ? (
+                            <div className="flex flex-1 overflow-hidden">
+                                {/* Left Side: Pipeline Visualization */}
                             <div className="w-1/3 border-r-[4px] border-black bg-gradient-to-b from-[#410F29] to-[#2A0A1A] p-8 overflow-y-auto hidden md:block relative scrollbar-hide">
                                 <div className="absolute left-[47px] top-12 bottom-12 w-1.5 bg-[#095955]/40 z-0 rounded-full"></div>
                                 <div className="space-y-4 relative z-10 py-4">
@@ -251,6 +281,77 @@ function BackendLogs() {
                                 </div>
                             </div>
                         </div>
+                        ) : (
+                            <div className="flex-1 p-6 md:p-8 overflow-y-auto bg-[#F8F6F0] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 h-full max-w-7xl mx-auto">
+                                    <div className="bg-white flex flex-col p-5 md:p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        <h3 className="text-xl font-black text-[#410F29] mb-4 border-b-[3px] border-black pb-3 uppercase tracking-tight flex items-center justify-between">
+                                            <span>Waiting Pool</span>
+                                            <span className="bg-[#410F29] text-white px-3 py-1 rounded-full text-sm">{poolStatus.waiting_pool?.length || 0}</span>
+                                        </h3>
+                                        <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                                            {poolStatus.waiting_pool?.map(p => (
+                                                <div key={p.id} className="p-3 bg-[#F8F6F0] border-2 border-black rounded-xl text-sm font-semibold flex items-center gap-3 hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+                                                    {p.image_url ? <img src={p.image_url.startsWith('http') ? p.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${p.image_url}`} alt="" className="w-12 h-12 object-cover rounded-lg border-[2px] border-black flex-shrink-0" /> : <div className="w-12 h-12 bg-gray-200 border-[2px] border-black rounded-lg flex-shrink-0" />}
+                                                    <div className="min-w-0">
+                                                        <div className="text-[#410F29] truncate">{p.title}</div>
+                                                        <div className="text-[#095955] font-black mt-0.5">₹{p.price}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(!poolStatus.waiting_pool || poolStatus.waiting_pool.length === 0) && (
+                                                <div className="text-center p-8 text-gray-400 font-medium border-2 border-dashed border-gray-300 rounded-xl">Pool is empty</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white flex flex-col p-5 md:p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        <h3 className="text-xl font-black text-[#F47216] mb-4 border-b-[3px] border-black pb-3 uppercase tracking-tight flex items-center justify-between">
+                                            <span>Queued Ads</span>
+                                            <span className="bg-[#F47216] text-white px-3 py-1 rounded-full text-sm">{poolStatus.queued_ads?.length || 0}</span>
+                                        </h3>
+                                        <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                                            {poolStatus.queued_ads?.map(ad => (
+                                                <div key={ad.id} className="p-3 bg-orange-50 border-2 border-black rounded-xl text-sm font-semibold hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="text-[#410F29]">Ad #{ad.id}</div>
+                                                        <div className="text-[#F47216] font-black">₹{ad.total_budget}</div>
+                                                    </div>
+                                                    {ad.image_url && <img src={ad.image_url.startsWith('http') ? ad.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${ad.image_url}`} alt="" className="w-full h-24 object-cover rounded-lg border-[2px] border-black" />}
+                                                </div>
+                                            ))}
+                                            {(!poolStatus.queued_ads || poolStatus.queued_ads.length === 0) && (
+                                                <div className="text-center p-8 text-gray-400 font-medium border-2 border-dashed border-gray-300 rounded-xl">No queued ads</div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-[#095955]/10 flex flex-col p-5 md:p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                                        <h3 className="text-xl font-black text-[#095955] mb-4 border-b-[3px] border-black pb-3 uppercase tracking-tight flex items-center justify-between relative z-10">
+                                            <span>Active Ads</span>
+                                            <span className="bg-[#095955] text-white px-3 py-1 rounded-full text-sm">{poolStatus.active_ads?.length || 0}</span>
+                                        </h3>
+                                        <div className="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar relative z-10">
+                                            {poolStatus.active_ads?.map(ad => (
+                                                <div key={ad.id} className="p-3 bg-white border-2 border-black rounded-xl text-sm font-semibold shadow-sm hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div className="text-[#410F29] flex items-center gap-1.5">
+                                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                            Ad #{ad.id}
+                                                        </div>
+                                                        <div className="text-[#095955] font-black">₹{ad.total_budget}</div>
+                                                    </div>
+                                                    {ad.image_url && <img src={ad.image_url.startsWith('http') ? ad.image_url : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${ad.image_url}`} alt="" className="w-full h-24 object-cover rounded-lg border-[2px] border-black" />}
+                                                </div>
+                                            ))}
+                                            {(!poolStatus.active_ads || poolStatus.active_ads.length === 0) && (
+                                                <div className="text-center p-8 text-gray-400 font-medium border-2 border-dashed border-gray-400 rounded-xl bg-white/50">No active ads</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

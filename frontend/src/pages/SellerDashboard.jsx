@@ -299,14 +299,14 @@ export default function SellerDashboard() {
   <main className="relative z-10 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
   <div>
    {/* Ad Ne Bana Di Jodi Section */}
-   <div className="mb-10 rounded-3xl overflow-hidden relative border border-white/60 bg-white shadow-xl transition-all">
-   <div className="p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+   <div className="mb-10 rounded-2xl overflow-hidden relative border-[4px] border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all">
+   <div className="p-6 md:p-8 border-b-[4px] border-black bg-[#F8F6F0] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
-    <h2 className="text-3xl font-extrabold text-[#410F29] flex items-center tracking-tight">
+    <h2 className="text-3xl font-black text-[#410F29] flex items-center tracking-tighter uppercase">
      <TrendingUp className="h-8 w-8 mr-2 text-[#F47216]"/>
      Ad Ne Bana Di Jodi
     </h2>
-    <p className="text-gray-500 font-medium mt-2">Boost your sales by pooling your products into our targeted ad network.</p>
+    <p className="text-gray-700 font-bold mt-2">Boost your sales by pooling your products into our targeted ad network.</p>
     </div>
     <button 
     onClick={() => {
@@ -316,7 +316,7 @@ export default function SellerDashboard() {
       setAdPoolProductId('');
      }
     }}
-    className="px-6 py-3 bg-[#F47216] text-white font-semibold rounded-full shadow-md hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#d96213] transition-all"
+    className="px-6 py-3 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
     >
     {isAdPoolOpen ? 'Close Ad Ne Bana Di Jodi' : 'Join Ad Ne Bana Di Jodi'}
     </button>
@@ -327,27 +327,27 @@ export default function SellerDashboard() {
     <div className="max-w-2xl mx-auto">
      
      {adPoolState === 'initial' && (
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-lg text-center">
-       <div className="w-16 h-16 bg-[#095955]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="bg-white p-8 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center">
+       <div className="w-16 h-16 bg-[#095955]/10 border-[2px] border-black rounded-xl flex items-center justify-center mx-auto mb-4">
         <Store className="h-8 w-8 text-[#095955]" />
        </div>
-       <h3 className="text-2xl font-bold text-[#410F29] mb-2">Check Your Eligibility</h3>
-       <p className="text-gray-500 mb-6">We ensure only high-quality, authentic small sellers enter the Ad Ne Bana Di Jodi to maintain premium ad slots.</p>
-       <button onClick={runSellerCheck} className="px-8 py-3 bg-[#095955] text-white font-bold rounded-full shadow-md hover:bg-[#074643] transition-all inline-flex items-center">
+       <h3 className="text-2xl font-black text-[#410F29] mb-2 uppercase tracking-tight">Check Your Eligibility</h3>
+       <p className="text-gray-700 font-bold mb-6">We ensure only high-quality, authentic small sellers enter the Ad Ne Bana Di Jodi to maintain premium ad slots.</p>
+       <button onClick={runSellerCheck} className="px-8 py-3 bg-[#095955] text-white font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all inline-flex items-center">
         Run Seller Scale Check <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
        </button>
       </div>
      )}
 
      {(adPoolState === 'checking_seller' || adPoolState === 'seller_pass' || adPoolState === 'seller_fail') && (
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-lg">
-       <h3 className="text-xl font-bold text-[#410F29] mb-6 flex items-center">
+      <div className="bg-white p-8 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+       <h3 className="text-xl font-black text-[#410F29] mb-6 flex items-center uppercase tracking-tight">
         {adPoolState === 'checking_seller' && <Loader2 className="animate-spin h-5 w-5 mr-2 text-[#F47216]" />}
         Seller Scale Checks
        </h3>
        <div className="space-y-4">
         {sellerChecks.map((chk, i) => (
-         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in-up">
+         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
           <span className="font-medium text-gray-700">{chk.name}</span>
           <div className="flex items-center gap-3">
            <span className="text-sm text-gray-500 font-mono">{chk.value}</span>
@@ -358,13 +358,13 @@ export default function SellerDashboard() {
        </div>
        
        {adPoolState === 'seller_fail' && (
-        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-center font-medium">
+        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border-[3px] border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] text-center font-bold">
          You do not meet the scale requirements for the micro-budget Ad Ne Bana Di Jodi.
         </div>
        )}
        {adPoolState === 'seller_pass' && (
-        <div className="mt-8 pt-6 border-t border-gray-100">
-         <h4 className="text-lg font-bold text-[#410F29] mb-4">Select Product to Pool</h4>
+        <div className="mt-8 pt-6 border-t-[3px] border-black">
+         <h4 className="text-lg font-black text-[#410F29] mb-4 uppercase">Select Product to Pool</h4>
          <select
           value={adPoolProductId}
           onChange={(e) => runProductCheck(e.target.value)}
@@ -381,14 +381,14 @@ export default function SellerDashboard() {
      )}
 
      {(adPoolState === 'checking_product' || adPoolState === 'product_fail' || adPoolState === 'configure') && (
-      <div className="mt-6 bg-white p-8 rounded-3xl border border-gray-100 shadow-lg animate-fade-in-up">
-       <h3 className="text-xl font-bold text-[#410F29] mb-6 flex items-center">
+      <div className="mt-6 bg-white p-8 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
+       <h3 className="text-xl font-black text-[#410F29] mb-6 flex items-center uppercase tracking-tight">
         {adPoolState === 'checking_product' && <Loader2 className="animate-spin h-5 w-5 mr-2 text-[#F47216]" />}
         Product Quality Checks
        </h3>
        <div className="space-y-4">
         {productChecks.map((chk, i) => (
-         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in-up">
+         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
           <span className="font-medium text-gray-700">{chk.name}</span>
           <div className="flex items-center gap-3">
            <span className="text-sm text-gray-500 font-mono">{chk.value}</span>
@@ -399,7 +399,7 @@ export default function SellerDashboard() {
        </div>
 
        {adPoolState === 'product_fail' && (
-        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-center font-medium">
+        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border-[3px] border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] text-center font-bold">
          This product does not meet our high-quality threshold. Please select a different product.
         </div>
        )}
@@ -407,9 +407,9 @@ export default function SellerDashboard() {
      )}
 
      {adPoolState === 'configure' && (
-      <div className="mt-6 space-y-6 bg-white p-8 rounded-3xl border border-[#F47216]/30 shadow-lg ring-4 ring-[#F47216]/5 animate-fade-in-up">
+      <div className="mt-6 space-y-6 bg-[#095955]/10 p-8 rounded-2xl border-[4px] border-[#095955] shadow-[6px_6px_0px_0px_rgba(9,89,85,1)] animate-fade-in-up">
        <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-[#410F29] flex items-center">
+        <h3 className="text-xl font-black text-[#095955] flex items-center uppercase tracking-tight">
          <CheckCircle2 className="h-6 w-6 text-green-500 mr-2" />
          Eligible for Ad Ne Bana Di Jodi
         </h3>
@@ -438,7 +438,7 @@ export default function SellerDashboard() {
         <button
         onClick={handleDeployAdPool}
         disabled={isDeploying}
-        className="w-full flex justify-center items-center px-4 py-3.5 rounded-full shadow-md text-lg font-bold text-white bg-[#095955] hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#074643] transition-all disabled:opacity-50"
+        className="w-full flex justify-center items-center px-4 py-3.5 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50"
         >
         <Zap className="h-6 w-6 mr-2 text-white"/>
         {isDeploying ? 'Deploying...' : 'Deploy to Pool'}
@@ -453,55 +453,55 @@ export default function SellerDashboard() {
 
    {/* Active Campaigns */}
    {metrics.active && (
-    <div className="p-8 bg-gradient-to-br from-[#095955]/5 to-[#F47216]/5 border-t border-gray-100">
+    <div className="p-8 bg-white border-t-[4px] border-black">
     <div className="flex items-center justify-between mb-6">
-     <h3 className="text-2xl font-extrabold tracking-tight text-[#410F29]">Active Campaigns</h3>
+     <h3 className="text-2xl font-black tracking-tighter uppercase text-[#410F29]">Active Campaigns</h3>
      <div className="flex items-center space-x-3">
-       <button onClick={handlePayBalance} className="bg-[#410F29] text-white text-sm font-bold px-4 py-2 rounded-full shadow-md hover:bg-[#2A091A] transition-all">Pay Outstanding Balance</button>
-       <span className="bg-[#F47216] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">Live</span>
+       <button onClick={handlePayBalance} className="bg-[#410F29] text-white text-sm font-black uppercase tracking-wider px-4 py-2 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all">Pay Outstanding Balance</button>
+       <span className="bg-[#F47216] text-[#410F29] text-xs font-black px-3 py-1 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider">Live</span>
      </div>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-     <div className="bg-white p-6 rounded-3xl shadow-md border border-white flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Remaining Ad Budget</span>
+     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Remaining Ad Budget</span>
      <span className="text-4xl font-black mt-2 text-[#410F29]">₹{metrics.remaining_budget ? metrics.remaining_budget.toFixed(2) : '0.00'}</span>
      </div>
-     <div className="bg-white p-6 rounded-3xl shadow-md border border-white flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Your Pro-Rated Clicks</span>
+     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Your Pro-Rated Clicks</span>
      <span className="text-4xl font-black mt-2 text-[#410F29]">{metrics.clicks ? metrics.clicks.toLocaleString() : 0}</span>
      </div>
-     <div className="bg-white p-6 rounded-3xl shadow-md border border-white flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Total Spend</span>
+     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Total Spend</span>
      <span className="text-4xl font-black mt-2 text-[#410F29]">₹{metrics.clicks ? (metrics.clicks * 2.0).toFixed(2) : '0.00'}</span>
      </div>
-     <div className="bg-gradient-to-br from-[#F47216] to-[#d96213] p-6 rounded-3xl shadow-lg border border-[#F47216]/20 flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
-     <span className="text-xs font-bold text-white/80 uppercase tracking-wider text-center">Sales Generated</span>
+     <div className="bg-[#F47216] p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+     <span className="text-xs font-black text-[#410F29] uppercase tracking-wider text-center">Sales Generated</span>
      <span className="text-4xl font-black mt-2 text-white">₹{metrics.clicks ? (metrics.clicks * 0.12 * 80).toFixed(0).toLocaleString() : 0}</span>
      </div>
     </div>
     
     {metrics.active_ads && metrics.active_ads.length > 0 && (
      <div>
-      <h4 className="text-lg font-bold text-[#410F29] mb-4">Your Sponsored Combo Ads</h4>
+      <h4 className="text-lg font-black uppercase tracking-wider text-[#410F29] mb-4">Your Sponsored Combo Ads</h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
        {metrics.active_ads.map(ad => {
         const myProduct = ad.products.find(p => p.seller_id === user.id);
         if (!myProduct) return null;
         return (
-         <div key={ad.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-md">
-          <img src={myProduct.image_url.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${myProduct.image_url}` : myProduct.image_url} alt={myProduct.title} className="w-full h-40 object-cover" />
-          <div className="p-4">
-           <h5 className="font-bold text-[#410F29] mb-1">{myProduct.title}</h5>
-           <p className="text-xs font-semibold text-[#F47216] mb-3">Running in Ad Ne Bana Di Jodi Slot #{ad.id}</p>
+         <div key={ad.id} className="bg-white rounded-2xl overflow-hidden border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col">
+          <img src={myProduct.image_url.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${myProduct.image_url}` : myProduct.image_url} alt={myProduct.title} className="w-full h-40 object-cover border-b-[3px] border-black" />
+          <div className="p-4 flex-grow flex flex-col">
+           <h5 className="font-black text-[#410F29] mb-1 uppercase tracking-tight">{myProduct.title}</h5>
+           <p className="text-xs font-black text-[#F47216] mb-3 uppercase tracking-wider">Running in Ad Slot #{ad.id}</p>
            
-           <div className="flex justify-between items-center pt-3 border-t border-gray-100 mb-3">
-            <span className="text-sm font-bold text-gray-600">Clicks Generated</span>
-            <span className="bg-[#F47216]/10 text-[#F47216] font-black px-3 py-1 rounded-lg text-lg">{metrics.clicks ? metrics.clicks.toLocaleString() : 0}</span>
+           <div className="flex justify-between items-center pt-3 border-t-[3px] border-black mb-3">
+            <span className="text-sm font-black text-gray-700 uppercase">Clicks Generated</span>
+            <span className="bg-[#F47216]/10 text-[#F47216] font-black px-3 py-1 border-[2px] border-[#F47216] rounded-xl text-lg">{metrics.clicks ? metrics.clicks.toLocaleString() : 0}</span>
            </div>
 
            <button 
             onClick={() => handleRemoveFromPool(myProduct.id)}
-            className="w-full bg-red-50 text-red-600 hover:bg-red-100 font-semibold py-2 rounded-xl text-sm transition-colors"
+            className="w-full mt-auto bg-red-100 text-red-600 font-black uppercase tracking-wider py-2 rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all"
            >
             Remove from Pool
            </button>
@@ -518,11 +518,11 @@ export default function SellerDashboard() {
 
    <div className="flex justify-between items-center mb-8 mt-12">
    <div className="mb-2">
-    <h2 className="text-3xl font-extrabold tracking-tight text-[#410F29]">Your Inventory</h2>
+    <h2 className="text-3xl font-black tracking-tighter uppercase text-[#410F29]">Your Inventory</h2>
    </div>
    <button 
     onClick={() => setIsModalOpen(true)}
-    className="flex items-center px-6 py-3 bg-[#095955] text-white font-semibold rounded-full shadow-md hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#074643] transition-all"
+    className="flex items-center px-6 py-3 bg-[#095955] text-white font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
    >
     <Plus className="h-5 w-5 mr-1.5"/>
     Add Product
@@ -530,15 +530,15 @@ export default function SellerDashboard() {
    </div>
 
    {products.length === 0 ? (
-   <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl">
-    <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-    <Package className="h-10 w-10 text-gray-400"/>
+   <div className="text-center py-20 bg-white rounded-3xl border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+    <div className="bg-[#F8F6F0] w-24 h-24 rounded-2xl border-[3px] border-black flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+    <Package className="h-10 w-10 text-[#410F29]"/>
     </div>
-    <h3 className="text-2xl font-bold text-[#410F29]">No products found</h3>
-    <p className="mt-3 text-base text-gray-500 font-medium mb-8 max-w-sm mx-auto">Get started by creating a new product to list in your catalog and push to the Ad Ne Bana Di Jodi.</p>
+    <h3 className="text-2xl font-black uppercase tracking-tight text-[#410F29]">No products found</h3>
+    <p className="mt-3 text-base text-gray-700 font-bold mb-8 max-w-sm mx-auto">Get started by creating a new product to list in your catalog and push to the Ad Ne Bana Di Jodi.</p>
     <button 
     onClick={() => setIsModalOpen(true)}
-    className="inline-flex items-center px-8 py-3.5 text-lg font-bold rounded-full text-white bg-[#095955] shadow-lg hover:-translate-y-0.5 hover:shadow-xl hover:bg-[#074643] transition-all"
+    className="inline-flex items-center px-8 py-3.5 text-lg font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-white bg-[#095955] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
     >
     <Plus className="h-6 w-6 mr-2"/>
     Add First Product
@@ -547,41 +547,41 @@ export default function SellerDashboard() {
    ) : (
    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     {products.map((product) => (
-    <div key={product.id} className="bg-white/80 backdrop-blur-md overflow-hidden rounded-3xl border border-white/60 shadow-xl flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
-     <div className="relative h-56 bg-gray-50 flex-shrink-0 border-b border-gray-100 overflow-hidden">
-     {product.image_url ? (
-      <img 
-      src={product.image_url.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${product.image_url}` : product.image_url} 
-      alt={product.title} 
-      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-      />
-     ) : (
-      <div className="flex items-center justify-center h-full w-full text-gray-300">
-      <ImageIcon className="h-16 w-16"/>
+     <div key={product.id} className="bg-white overflow-hidden rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
+      <div className="relative h-56 bg-[#F8F6F0] flex-shrink-0 border-b-[3px] border-black overflow-hidden">
+      {product.image_url ? (
+       <img 
+       src={product.image_url.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${product.image_url}` : product.image_url} 
+       alt={product.title} 
+       className="w-full h-full object-cover border-b-2 border-transparent"
+       />
+      ) : (
+       <div className="flex items-center justify-center h-full w-full text-gray-300">
+       <ImageIcon className="h-16 w-16"/>
+       </div>
+      )}
+      {product.category && (
+       <span className="absolute top-4 left-4 px-3 py-1 bg-[#F47216] text-[#410F29] text-xs font-black rounded-lg border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider">
+       {product.category}
+       </span>
+      )}
       </div>
-     )}
-     {product.category && (
-      <span className="absolute top-4 left-4 px-3 py-1.5 bg-[#F47216]/90 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow-sm uppercase tracking-wider">
-      {product.category}
-      </span>
-     )}
-     </div>
-     <div className="p-6 flex flex-col flex-grow">
-     <div className="flex justify-between items-start mb-2">
-      <h3 className="text-xl font-bold text-[#410F29] line-clamp-2" title={product.title}>
-      {product.title}
-      </h3>
-     </div>
-     <div className="mt-auto flex items-center justify-between pt-4">
-      <div className="text-2xl font-black text-[#095955]">
-      ₹{product.price.toFixed(2)}
+      <div className="p-6 flex flex-col flex-grow">
+      <div className="flex justify-between items-start mb-2">
+       <h3 className="text-xl font-black text-[#410F29] line-clamp-2 uppercase tracking-tight" title={product.title}>
+       {product.title}
+       </h3>
       </div>
-      <div className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
-      Stock: <span className={product.stock > 0 ? "text-[#095955] ml-1" : "text-red-500 ml-1"}>{product.stock}</span>
+      <div className="mt-auto flex items-center justify-between pt-4">
+       <div className="text-2xl font-black text-[#095955]">
+       ₹{product.price.toFixed(2)}
+       </div>
+       <div className="text-xs font-black uppercase tracking-wider text-gray-700 bg-gray-100 px-3 py-1.5 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+       Stock: <span className={product.stock > 0 ? "text-[#095955] ml-1" : "text-red-500 ml-1"}>{product.stock}</span>
+       </div>
+      </div>
       </div>
      </div>
-     </div>
-    </div>
     ))}
    </div>
    )}
@@ -602,15 +602,15 @@ export default function SellerDashboard() {
    <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
    {/* Modal panel */}
-   <div className="relative z-10 inline-block align-bottom bg-white/95 backdrop-blur-xl rounded-3xl text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-white/50 shadow-2xl">
+   <div className="relative z-10 inline-block align-bottom bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
     <div className="px-6 pt-6 pb-6 sm:p-8">
     <div className="flex justify-between items-center mb-6">
-     <h3 className="text-2xl font-extrabold text-[#410F29] tracking-tight">
+     <h3 className="text-2xl font-black text-[#410F29] uppercase tracking-tighter">
      Add New Product
      </h3>
      <button 
      onClick={() => setIsModalOpen(false)}
-     className="text-gray-400 bg-gray-100/50 hover:bg-gray-100 p-2 rounded-full transition-all"
+     className="text-black bg-gray-100 border-[2px] border-black p-2 hover:bg-gray-200 transition-all"
      >
      <X className="h-5 w-5"/>
      </button>

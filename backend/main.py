@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, Form, File
@@ -8,6 +11,7 @@ from sqlalchemy import or_
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import cloudinary
 import cloudinary.uploader
 import io
 import random
@@ -281,6 +285,25 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
         await broadcast_log("[Gatekeeper] Passed. Queuing for matchmaking...")
         
         db.add(WaitingProduct(product_id=product.id))
+        
+        # --- Seed 2 random eligible products to immediately trigger matchmaking ---
+        waiting_ids = [wp.product_id for wp in db.query(WaitingProduct).all()]
+        waiting_ids.append(product.id)
+        
+        available_products = db.query(Product).filter(
+            Product.rating >= 4.0,
+            ~Product.id.in_(waiting_ids)
+        ).all()
+        
+        if len(available_products) >= 2:
+            seed_products = random.sample(available_products, 2)
+            for sp in seed_products:
+                db.add(WaitingProduct(product_id=sp.id))
+                
+            # Log outside the loop to avoid duplicate messages or await issues
+            await broadcast_log(f"[System] Automatically seeded 2 random products into waiting pool for demo matchmaking.")
+        # -------------------------------------------------------------------------
+        
         db.commit()
         
         asyncio.create_task(check_waiting_pool())
@@ -335,6 +358,31 @@ async def ad_click(req: AdClickRequest, db: Session = Depends(get_db)):
                 asyncio.create_task(check_waiting_pool())
                 
     return {"message": "Click attributed successfully"}
+
+@app.get("/api/pool/status")
+def get_pool_status(db: Session = Depends(get_db)):
+    waiting = db.query(WaitingProduct).all()
+    waiting_data = []
+    for w in waiting:
+        p = db.query(Product).filter(Product.id == w.product_id).first()
+        if p:
+            waiting_data.append({"id": p.id, "title": p.title, "image_url": p.image_url, "seller_id": p.seller_id, "price": p.price})
+            
+    active_ads = db.query(AdGroup).filter(AdGroup.status == AdStatus.active).order_by(AdGroup.id.desc()).all()
+    active_data = []
+    for ad in active_ads:
+        active_data.append({"id": ad.id, "total_budget": ad.total_budget, "image_url": ad.image_url, "ad_type": ad.ad_type})
+        
+    queued_ads = db.query(AdGroup).filter(AdGroup.status == AdStatus.queued).order_by(AdGroup.id.desc()).all()
+    queued_data = []
+    for ad in queued_ads:
+        queued_data.append({"id": ad.id, "total_budget": ad.total_budget, "image_url": ad.image_url, "ad_type": ad.ad_type})
+        
+    return {
+        "waiting_pool": waiting_data,
+        "active_ads": active_data,
+        "queued_ads": queued_data
+    }
 
 @app.get("/api/combo-ads/active")
 def get_active_combo_ads(db: Session = Depends(get_db)):

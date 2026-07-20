@@ -30,30 +30,30 @@ function SmartComboAd({ comboAd }) {
 
   const adId = comboAd.id;
 
-  if (isBigSeller) {
+   if (isBigSeller) {
     return (
-      <div className="bg-white/80 backdrop-blur-md overflow-hidden rounded-3xl border border-white/60 shadow-xl flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group">
-        <div className="absolute top-0 right-0 bg-[#095955] text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider z-10 shadow-lg rounded-bl-2xl">
+      <div className="bg-white overflow-hidden rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 relative group">
+        <div className="absolute top-0 right-0 bg-[#095955] text-white px-4 py-1.5 text-xs font-black uppercase tracking-wider z-10 border-b-[3px] border-l-[3px] border-black shadow-[-4px_4px_0px_0px_rgba(0,0,0,1)] rounded-bl-xl">
           Sponsored
         </div>
-        <div className="h-56 bg-gray-50 flex items-center justify-center border-b border-gray-100 relative overflow-hidden">
+        <div className="h-56 bg-[#F8F6F0] flex items-center justify-center border-b-[3px] border-black relative overflow-hidden">
           {comboAd.image_url ? (
             <img 
               src={resolveImageUrl(comboAd.image_url)} 
               alt="Premium Ad"
-              className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover cursor-pointer"
               onClick={() => handleAdClick(null, adId)}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-[#F47216]/20 to-[#095955]/20 backdrop-blur-md"></div>
+            <div className="w-full h-full bg-[#095955]/10"></div>
           )}
         </div>
         <div className="p-6 flex flex-col flex-grow">
-          <h3 className="text-xl font-bold text-[#410F29] truncate">Premium Collection</h3>
-          <p className="mt-2 text-sm text-gray-500 line-clamp-2 font-medium">Discover premium picks and exclusive trending styles.</p>
+          <h3 className="text-xl font-black uppercase tracking-tight text-[#410F29] truncate">Premium Collection</h3>
+          <p className="mt-2 text-sm text-gray-700 line-clamp-2 font-bold uppercase tracking-wider">Discover premium picks and exclusive trending styles.</p>
           <div className="mt-auto pt-6 flex items-center justify-between">
-            <span className="text-sm font-bold text-[#F47216]">Promoted</span>
-            <button onClick={() => handleAdClick(null, adId)} className="px-5 py-2.5 bg-[#F47216] text-white font-semibold rounded-full shadow-md hover:shadow-lg hover:bg-[#d96213] hover:-translate-y-0.5 transition-all">
+            <span className="text-sm font-black uppercase tracking-wider text-[#F47216]">Promoted</span>
+            <button onClick={() => handleAdClick(null, adId)} className="px-5 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">
               Shop Now
             </button>
           </div>
@@ -62,16 +62,15 @@ function SmartComboAd({ comboAd }) {
     );
   }
 
-  // Pooled Ad - Rectangular grid item design
-  const products = comboAd.products || [];
+   const products = comboAd.products || [];
   return (
-    <div className="bg-white/80 backdrop-blur-md overflow-hidden rounded-3xl border border-white/60 shadow-xl flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group sm:col-span-2 lg:col-span-2">
-      <div className="absolute top-0 right-0 bg-[#F47216] text-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider z-20 shadow-lg rounded-bl-xl">
+    <div className="bg-white overflow-hidden rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 relative group sm:col-span-2 lg:col-span-2">
+      <div className="absolute top-0 right-0 bg-[#F47216] text-[#410F29] px-4 py-1.5 text-[10px] font-black uppercase tracking-wider z-20 border-b-[3px] border-l-[3px] border-black shadow-[-4px_4px_0px_0px_rgba(0,0,0,1)] rounded-bl-xl">
         Sponsored Combo
       </div>
       
       {/* Composited Background Image */}
-      <div className="h-56 bg-gray-50 relative overflow-hidden flex-shrink-0">
+      <div className="h-56 bg-[#F8F6F0] relative overflow-hidden flex-shrink-0 border-b-[3px] border-black">
         {comboAd.image_url ? (
           <img 
             src={resolveImageUrl(comboAd.image_url)} 
@@ -79,7 +78,7 @@ function SmartComboAd({ comboAd }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-[#F47216]/20 to-[#095955]/20 backdrop-blur-md"></div>
+          <div className="w-full h-full bg-[#095955]/10"></div>
         )}
 
         {/* Tap Zones overlaid on top for combo ads */}
@@ -88,10 +87,10 @@ function SmartComboAd({ comboAd }) {
             <div 
               key={product.id}
               onClick={() => handleAdClick(product.id, adId)}
-              className="flex-1 cursor-pointer hover:bg-black/20 transition-colors flex flex-col justify-end p-2 sm:p-4 pb-4 sm:pb-6 group/zone border-r border-white/10 last:border-0"
+              className="flex-1 cursor-pointer hover:bg-black/20 transition-colors flex flex-col justify-end p-2 sm:p-4 pb-4 sm:pb-6 group/zone border-r-[3px] border-transparent hover:border-black last:border-0"
               title={`Click to view ${product.title}`}
             >
-              <div className="opacity-0 group-hover/zone:opacity-100 text-[#410F29] font-bold bg-white/95 backdrop-blur-sm shadow-xl text-[10px] sm:text-xs text-center py-2 px-1 rounded-xl transition-all transform translate-y-2 group-hover/zone:translate-y-0">
+              <div className="opacity-0 group-hover/zone:opacity-100 text-[#410F29] font-black uppercase tracking-wider bg-white border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-[10px] sm:text-xs text-center py-2 px-1 rounded-xl transition-all transform translate-y-2 group-hover/zone:translate-y-0">
                 Shop {product.title.split(' ').slice(0,2).join(' ')}
               </div>
             </div>
@@ -99,9 +98,9 @@ function SmartComboAd({ comboAd }) {
         </div>
       </div>
       
-      <div className="p-4 sm:p-6 flex flex-col flex-grow bg-gradient-to-br from-[#095955]/5 to-transparent">
-        <h3 className="text-xl font-bold text-[#410F29]">Trending Ad Ne Bana Di Jodi</h3>
-        <p className="mt-2 text-sm text-gray-500 line-clamp-2 font-medium">A perfect match curated for you.</p>
+      <div className="p-4 sm:p-6 flex flex-col flex-grow bg-white">
+        <h3 className="text-xl font-black uppercase tracking-tight text-[#410F29]">Trending Ad Ne Bana Di Jodi</h3>
+        <p className="mt-2 text-sm text-gray-700 line-clamp-2 font-bold uppercase tracking-wider">A perfect match curated for you.</p>
       </div>
     </div>
   );
@@ -172,44 +171,40 @@ export default function CustomerFeed() {
   }
 
   return (
-  <div className="min-h-screen bg-[#F8F6F0] text-[#410F29] relative overflow-hidden font-sans">
-    
-    {/* Background Blobs */}
-    <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#095955] rounded-full mix-blend-multiply filter blur-[120px] opacity-20 pointer-events-none z-0"></div>
-    <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#F47216] rounded-full mix-blend-multiply filter blur-[120px] opacity-20 pointer-events-none z-0"></div>
+  <div className="min-h-screen bg-[#F8F6F0] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] text-[#410F29] relative overflow-hidden font-sans">
 
-    <nav className="bg-white/80 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50 shadow-sm transition-all">
+    <nav className="bg-[#F8F6F0] border-b-[4px] border-black sticky top-0 z-50 shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-20">
       <div className="flex items-center">
         <ShoppingBag className="h-6 w-6 text-[#095955] mr-2"/>
-        <span className="text-[#095955] text-xl font-bold tracking-tight">Customer Feed</span>
+        <span className="text-[#095955] text-xl font-black uppercase tracking-tight">Customer Feed</span>
       </div>
       
       {/* Header Branding */}
       <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-[#410F29]">meesho</span>
-        <span className="text-sm font-semibold text-[#095955]">ScriptedBy{'{'}Her{'}'} 2.0</span>
+        <span className="text-3xl font-black uppercase tracking-tighter text-[#410F29]">meesho</span>
+        <span className="text-sm font-black uppercase tracking-wider text-[#095955] bg-[#095955]/10 px-2 py-0.5 border-[2px] border-black rounded-lg">ScriptedBy{'{'}Her{'}'} 2.0</span>
       </div>
 
       <div className="flex items-center space-x-4">
         <div className="relative hidden sm:block">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400"/>
+          <Search className="h-5 w-5 text-gray-700"/>
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-4 py-2.5 sm:text-sm border border-transparent rounded-full bg-gray-100/80 text-gray-900 placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#F47216] focus:border-transparent transition-all shadow-inner"
+          className="block w-full pl-10 pr-4 py-2.5 sm:text-sm border-[3px] border-black rounded-xl font-bold bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-[#F47216]/20 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
           placeholder="Search products..."
         />
         </div>
-        <button className="p-2.5 bg-white border border-gray-100 rounded-full text-gray-600 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all relative">
+        <button className="p-2.5 bg-white border-[3px] border-black rounded-xl text-gray-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all relative">
         <ShoppingCart className="h-5 w-5"/>
-        <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-[#F47216] border-2 border-white"></span>
+        <span className="absolute -top-2 -right-2 block h-4 w-4 rounded-full bg-[#F47216] border-[2px] border-black"></span>
         </button>
         <button 
         onClick={handleLogout}
-        className="p-2.5 bg-red-50 border border-red-100 rounded-full text-red-500 shadow-sm hover:shadow hover:-translate-y-0.5 hover:bg-red-100 transition-all"
+        className="p-2.5 bg-red-400 border-[3px] border-black rounded-xl text-[#410F29] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
         title="Log out"
         >
         <LogOut className="h-5 w-5"/>
@@ -221,9 +216,9 @@ export default function CustomerFeed() {
 
     <main className="relative z-10 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     <div>
-      <div className="mb-8">
-      <h2 className="text-3xl font-extrabold tracking-tight text-[#410F29]">Discover</h2>
-      <p className="text-gray-500 font-medium mt-1">Personalized products and sponsored collections.</p>
+      <div className="mb-8 mt-4">
+      <h2 className="text-3xl font-black uppercase tracking-tight text-[#410F29]">Discover</h2>
+      <p className="text-gray-700 font-bold uppercase tracking-wider mt-2">Personalized products and sponsored collections.</p>
       </div>
       
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -234,24 +229,24 @@ export default function CustomerFeed() {
         
         const product = item.data;
         return (
-          <div key={`prod-${product.id}`} className="bg-white/80 backdrop-blur-md overflow-hidden rounded-3xl border border-white/60 shadow-xl flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 group">
-          <div className="h-56 bg-gray-50 flex items-center justify-center border-b border-gray-100 relative overflow-hidden">
+          <div key={`prod-${product.id}`} className="bg-white overflow-hidden rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 group">
+          <div className="h-56 bg-[#F8F6F0] flex items-center justify-center border-b-[3px] border-black relative overflow-hidden">
             {product.image_url ? (
             <img 
               src={resolveImageUrl(product.image_url)} 
               alt={product.title} 
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover"
             />
             ) : (
-            <ShoppingBag className="h-16 w-16 text-gray-300 group-hover:scale-110 transition-transform duration-500"/>
+            <ShoppingBag className="h-16 w-16 text-[#095955]/20 group-hover:scale-110 transition-transform duration-500"/>
             )}
           </div>
           <div className="p-6 flex flex-col flex-grow">
-            <h3 className="text-xl font-bold text-[#410F29] truncate">{product.title}</h3>
-            <p className="mt-2 text-sm text-gray-500 line-clamp-2 font-medium">{product.description ||"Premium quality product."}</p>
+            <h3 className="text-xl font-black uppercase tracking-tight text-[#410F29] truncate">{product.title}</h3>
+            <p className="mt-2 text-sm text-gray-700 line-clamp-2 font-bold uppercase tracking-wider">{product.description ||"Premium quality product."}</p>
             <div className="mt-auto pt-6 flex items-center justify-between">
             <span className="text-2xl font-black text-[#095955]">₹{product.price.toFixed(2)}</span>
-            <button onClick={() => alert("Added to cart!")} className="px-5 py-2.5 bg-[#F47216] text-white font-semibold rounded-full shadow-md hover:shadow-lg hover:bg-[#d96213] hover:-translate-y-0.5 transition-all">
+            <button onClick={() => alert("Added to cart!")} className="px-5 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">
               Add to Cart
             </button>
             </div>
