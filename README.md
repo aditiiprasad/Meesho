@@ -15,90 +15,89 @@ If Seller A bids ₹40, Seller B bids ₹50, and Seller C bids ₹35, they lose 
 When a customer clicks on a specific product within the combo ad, only that specific seller's budget is deducted via our proportional attribution engine.
 
 ## 🧠 AI Architecture: The 7-Layer Optimization Engine
-
 ```mermaid
 flowchart TD
     %% Styling
-    classDef client fill:#2D3748,stroke:#4A5568,color:#fff,stroke-width:2px,rx:8px
-    classDef api fill:#3182CE,stroke:#2B6CB0,color:#fff,stroke-width:2px,rx:8px
-    classDef worker fill:#805AD5,stroke:#6B46C1,color:#fff,stroke-width:2px,rx:8px
-    classDef db fill:#38A169,stroke:#2F855A,color:#fff,stroke-width:2px,rx:8px
-    classDef external fill:#DD6B20,stroke:#C05621,color:#fff,stroke-width:2px,rx:8px
-    classDef orchestrator fill:#D53F8C,stroke:#B83280,color:#fff,stroke-width:2px,rx:8px
+    classDef client fill:#2D3748,stroke:#4A5568,color:#fff,stroke-width:2px,rx:8px;
+    classDef api fill:#3182CE,stroke:#2B6CB0,color:#fff,stroke-width:2px,rx:8px;
+    classDef worker fill:#805AD5,stroke:#6B46C1,color:#fff,stroke-width:2px,rx:8px;
+    classDef db fill:#38A169,stroke:#2F855A,color:#fff,stroke-width:2px,rx:8px;
+    classDef external fill:#DD6B20,stroke:#C05621,color:#fff,stroke-width:2px,rx:8px;
+    classDef orchestrator fill:#D53F8C,stroke:#B83280,color:#fff,stroke-width:2px,rx:8px;
     
     %% Client & API Layer
-    Seller([Seller Frontend]) ::: client
-    API_PoolJoin["POST /api/pool/join"] ::: api
+    Seller([Seller Frontend]):::client;
+    API_PoolJoin["POST /api/pool/join"]:::api;
     
-    Seller -- "Clicks 'Pool this product'" --> API_PoolJoin
+    Seller -- "Clicks 'Pool this product'" --> API_PoolJoin;
     
     %% Database Layer
-    WaitingDB[("WaitingProduct Table")] ::: db
-    AdGroupDB[("AdGroup Table")] ::: db
+    WaitingDB[("WaitingProduct Table")]:::db;
+    AdGroupDB[("AdGroup Table")]:::db;
     
-    API_PoolJoin -- "Inserts Product" --> WaitingDB
-    API_PoolJoin -- "Dynamically Seeds 15 Random Products" --> WaitingDB
+    API_PoolJoin -- "Inserts Product" --> WaitingDB;
+    API_PoolJoin -- "Dynamically Seeds 15 Random Products" --> WaitingDB;
     
     %% Matchmaker Pipeline
-    Matchmaker["async check_waiting_pool()"] ::: worker
-    API_PoolJoin -- "Fires Background Task" --> Matchmaker
+    Matchmaker["async check_waiting_pool()"]:::worker;
+    API_PoolJoin -- "Fires Background Task" --> Matchmaker;
     
-    Matchmaker -- "Fetches all candidates" --> WaitingDB
+    Matchmaker -- "Fetches all candidates" --> WaitingDB;
     
     subgraph "7-Layer Optimization Pipeline"
-        ComboGen["Generate Combinations (itertools)"]
-        Gemini{"Google Gemini API\n(Embeddings & Semantics)"} ::: external
-        Fitness["Calculate Fitness\n(Audience Overlap & Budget)"]
+        ComboGen["Generate Combinations (itertools)"];
+        Gemini{"Google Gemini API\n(Embeddings & Semantics)"}:::external;
+        Fitness["Calculate Fitness\n(Audience Overlap & Budget)"];
         
-        ComboGen --> Gemini --> Fitness
+        ComboGen --> Gemini --> Fitness;
     end
     
-    Matchmaker --> ComboGen
+    Matchmaker --> ComboGen;
     
     subgraph "Creative Compositor"
-        ImageProc["Pillow Image Stitching"]
-        Cloudinary{"Cloudinary API"} ::: external
+        ImageProc["Pillow Image Stitching"];
+        Cloudinary{"Cloudinary API"}:::external;
         
-        ImageProc --> Cloudinary
+        ImageProc --> Cloudinary;
     end
     
-    Fitness -- "Picks Best Trio" --> ImageProc
+    Fitness -- "Picks Best Trio" --> ImageProc;
     
-    Cloudinary -- "Returns Image URL" --> AdCreation
-    AdCreation["Create AdGroup\n(status: 'bidding')"] ::: api
-    AdCreation --> AdGroupDB
+    Cloudinary -- "Returns Image URL" --> AdCreation;
+    AdCreation["Create AdGroup\n(status: 'bidding')"]:::api;
+    AdCreation --> AdGroupDB;
     
     %% Background Orchestrator Layer
-    Orchestrator{"Background Orchestrator\n(Runs every 5 seconds)"} ::: orchestrator
+    Orchestrator{"Background Orchestrator\n(Runs every 5 seconds)"}:::orchestrator;
     
     subgraph "Orchestrator Execution Loop"
-        direction TB
-        Phase1["Phase 1: Pruning\n(Check 2-Minute Time Limits)"]
-        Phase2["Phase 2: Bidding War\n(Resolve Bidding Bucket)"]
-        Phase3["Phase 3: Slot Promotion\n(Fill Empty Active Slots)"]
+        direction TB;
+        Phase1["Phase 1: Pruning\n(Check 2-Minute Time Limits)"];
+        Phase2["Phase 2: Bidding War\n(Resolve Bidding Bucket)"];
+        Phase3["Phase 3: Slot Promotion\n(Fill Empty Active Slots)"];
         
-        Phase1 --> Phase2 --> Phase3
+        Phase1 --> Phase2 --> Phase3;
     end
     
-    Orchestrator --> Phase1
+    Orchestrator --> Phase1;
     
     %% Orchestrator interactions with DB
-    Phase1 -- "Remove expired Active Ads\n(Return products to pool)" --> WaitingDB
-    Phase1 -- "Delete expired AdGroups" --> AdGroupDB
+    Phase1 -- "Remove expired Active Ads\n(Return products to pool)" --> WaitingDB;
+    Phase1 -- "Delete expired AdGroups" --> AdGroupDB;
     
-    Phase2 -- "30% Chance to inject Big Seller" --> Phase2
-    Phase2 -- "Compare bids" --> AdGroupDB
-    Phase2 -- "Winner status='queued'" --> AdGroupDB
-    Phase2 -- "Loser products returned" --> WaitingDB
+    Phase2 -- "30% Chance to inject Big Seller" --> Phase2;
+    Phase2 -- "Compare bids" --> AdGroupDB;
+    Phase2 -- "Winner status='queued'" --> AdGroupDB;
+    Phase2 -- "Loser products returned" --> WaitingDB;
     
-    Phase3 -- "If active < 3, pull from queued" --> AdGroupDB
-    Phase3 -- "Set status='active', started_at=now()" --> AdGroupDB
+    Phase3 -- "If active < 3, pull from queued" --> AdGroupDB;
+    Phase3 -- "Set status='active', started_at=now()" --> AdGroupDB;
     
     %% PubSub for Frontend Visualization
-    Redis{"Redis (Upstash)\nPub/Sub"} ::: external
-    Matchmaker -. "Publishes SSE Logs" .-> Redis
-    Orchestrator -. "Publishes SSE Logs" .-> Redis
-    Redis -. "Updates Live Visualise Tab" .-> Seller
+    Redis{"Redis (Upstash)\nPub/Sub"}:::external;
+    Matchmaker -. "Publishes SSE Logs" .-> Redis;
+    Orchestrator -. "Publishes SSE Logs" .-> Redis;
+    Redis -. "Updates Live Visualise Tab" .-> Seller;
 ```
 
 This isn't a random grouping of products. The Jodi Maker ensures the ads are high-converting and contextually brilliant using a **7-Layer AI Optimization Engine**:
