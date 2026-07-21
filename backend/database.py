@@ -1,5 +1,6 @@
 import os
 import random
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -112,40 +113,19 @@ def seed_data():
         db.add_all(big_seller_products)
         db.commit()
 
-        print("Seeding some active individual ads for Big Sellers...")
+        print("Seeding exactly 3 active individual ads for Big Sellers...")
         active_ads = []
-        for bs in big_sellers:
+        for bs in big_sellers[:3]:
             active_ads.append(AdGroup(
                 status=AdStatus.active,
                 ad_type=AdType.individual,
                 big_seller_id=bs.id,
                 bid_amount=round(random.uniform(50.0, 120.0), 2),
                 total_budget=round(random.uniform(1000.0, 5000.0), 2),
-                image_url=f"https://placehold.co/900x300/F47216/ffffff?text=Premium+Sponsor+Ad+{bs.id}"
+                image_url=f"https://placehold.co/900x300/F47216/ffffff?text=Premium+Sponsor+Ad+{bs.id}",
+                started_at=datetime.utcnow()
             ))
         db.add_all(active_ads)
-        db.commit()
-
-    if db.query(WaitingProduct).count() == 0:
-        print("Seeding 20 small-seller products into Ad-Pool Waiting List...")
-        all_products = db.query(Product).all()
-        
-        guaranteed = []
-        for cat in ['Top', 'Bottom', 'Accessory']:
-            p = next((x for x in all_products if x.category == cat), None)
-            if p: guaranteed.append(p)
-            
-        random.shuffle(all_products)
-        waiting = []
-        for p in guaranteed:
-            waiting.append(WaitingProduct(product_id=p.id))
-            
-        for p in all_products:
-            if len(waiting) >= 20: break
-            if p not in guaranteed:
-                waiting.append(WaitingProduct(product_id=p.id))
-                
-        db.add_all(waiting)
         db.commit()
             
     db.close()

@@ -108,22 +108,8 @@ async def generate_combo_ad(trio_ids, trio_budgets):
         pooled_budget = sum(trio_budgets)
         await broadcast_log(f"[Creative Compositor] Downloading images and compositing banner for pooled budget Rs.{pooled_budget:.2f}...")
         
-        big_seller_bid = random.randint(10, 30) # Capped to ensure small sellers win for the demo
-        await broadcast_log(f"[Bidder] Entering auction with Pooled Budget Rs.{pooled_budget:.2f}. Competing against Big Seller bid Rs.{big_seller_bid:.2f}...")
-        
-        await asyncio.sleep(1.5)
-        
-        if pooled_budget > big_seller_bid:
-            await broadcast_log(f"[Bidder] SUCCESS! Won premium slot. Cost: Rs.{big_seller_bid + 0.01:.2f}")
-            status = AdStatus.queued
-        else:
-            await broadcast_log(f"[Bidder] FAILED. Outbid by Big Seller. Trio returned to pool.")
-            # Return to pool
-            for p in trio_products:
-                db.add(WaitingProduct(product_id=p.id))
-            db.commit()
-            return
-            
+        # We will no longer do instant bid resolution here.
+        # Instead, it goes into 'bidding' state and fights in the orchestrator.
         images = []
         async with httpx.AsyncClient(timeout=5.0) as client:
             for p in trio_products:
@@ -170,21 +156,18 @@ async def generate_combo_ad(trio_ids, trio_budgets):
             
         # Create AdGroup
         ad_group = AdGroup(
-            status=status,
+            status=AdStatus.bidding,
             ad_type=AdType.pooled,
             product_1_id=trio_products[0].id,
             product_2_id=trio_products[1].id,
             product_3_id=trio_products[2].id,
-            bid_amount=big_seller_bid + 0.01,
+            bid_amount=pooled_budget,
             total_budget=pooled_budget,
             image_url=final_image_url
         )
         db.add(ad_group)
         db.commit()
-        await broadcast_log(f"[System] Combo ad added to database with status: {status.value}")
-        
-        from main import promote_to_active_ads
-        await promote_to_active_ads()
+        await broadcast_log(f"[System] Combo ad added to database with status: bidding")
 
     except Exception as e:
         await broadcast_log(f"[Creative Compositor] Failed to generate image: {e}")

@@ -26,8 +26,8 @@ function Home() {
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <a href="https://github.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">GITHUB</a>
-                    <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#095955] text-[#F8F6F0] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F47216] transition-all">LINKEDIN</a>
+                    <a href="https://github.com/aditiiprasad" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">GITHUB</a>
+                    <a href="https://linkedin.com/in/aditiiprasad" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#095955] text-[#F8F6F0] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">LINKEDIN</a>
                 </div>
             </header>
 

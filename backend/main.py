@@ -15,6 +15,7 @@ import cloudinary
 import cloudinary.uploader
 import io
 import random
+from datetime import datetime, timedelta
 
 from database import get_db, seed_data
 from models import (
@@ -33,7 +34,90 @@ async def lifespan(app: FastAPI):
     
     # Run the promotion instantly to fill active slots
     asyncio.create_task(promote_to_active_ads())
+    
+    # Start the orchestrator task
+    task = asyncio.create_task(background_orchestrator())
     yield
+    task.cancel()
+
+async def background_orchestrator():
+    while True:
+        await asyncio.sleep(5)
+        db = next(get_db())
+        try:
+            made_changes = False
+            
+            # Step 1: Prune 2-minute-old active ads
+            two_mins_ago = datetime.utcnow() - timedelta(minutes=2)
+            expired_ads = db.query(AdGroup).filter(
+                AdGroup.status == AdStatus.active,
+                AdGroup.started_at <= two_mins_ago
+            ).all()
+            
+            for ad in expired_ads:
+                # Return products to waiting pool if pooled and still has budget
+                if ad.ad_type == AdType.pooled and ad.total_budget > 0:
+                    for pid in [ad.product_1_id, ad.product_2_id, ad.product_3_id]:
+                        if pid:
+                            db.add(WaitingProduct(product_id=pid))
+                
+                db.delete(ad)
+                made_changes = True
+                await broadcast_log(f"[Orchestrator] Ad {ad.id} expired (2 mins limit). Removed from Active.")
+            
+            # Step 2: Resolve Bidding state
+            bidding_ads = db.query(AdGroup).filter(AdGroup.status == AdStatus.bidding).all()
+            if bidding_ads:
+                # 30% chance to simulate a big seller bidding to keep auction competitive
+                if random.random() < 0.3:
+                    big_sellers = db.query(BigSeller).all()
+                    if big_sellers:
+                        bs = random.choice(big_sellers)
+                        big_ad = AdGroup(
+                            status=AdStatus.bidding,
+                            ad_type=AdType.individual,
+                            big_seller_id=bs.id,
+                            bid_amount=round(random.uniform(20.0, 50.0), 2),
+                            total_budget=round(random.uniform(500.0, 2000.0), 2),
+                            image_url=f"https://placehold.co/900x300/095955/ffffff?text=Enterprise+Bidder+{bs.id}",
+                            started_at=datetime.utcnow()
+                        )
+                        db.add(big_ad)
+                        db.commit()
+                        bidding_ads.append(big_ad)
+                        await broadcast_log(f"[Bidder] Enterprise Seller {bs.id} joined the auction.")
+
+                # Sort bidding ads by highest bid
+                bidding_ads.sort(key=lambda x: x.bid_amount, reverse=True)
+                
+                # Top bid wins and goes to queued
+                winner = bidding_ads[0]
+                winner.status = AdStatus.queued
+                await broadcast_log(f"[Orchestrator] Ad {winner.id} won the auction with bid Rs.{winner.bid_amount:.2f}! Moved to Queue.")
+                
+                # Losers get rejected
+                for loser in bidding_ads[1:]:
+                    if loser.ad_type == AdType.pooled:
+                        # Return to pool
+                        for pid in [loser.product_1_id, loser.product_2_id, loser.product_3_id]:
+                            if pid:
+                                db.add(WaitingProduct(product_id=pid))
+                    db.delete(loser)
+                    await broadcast_log(f"[Orchestrator] Ad {loser.id} lost the auction and was rejected.")
+                    
+                made_changes = True
+                db.commit()
+            
+            # Step 3: Promote to Active if we made space or changes
+            if made_changes:
+                db.commit()
+                await promote_to_active_ads()
+
+        except Exception as e:
+            print(f"Error in background_orchestrator: {e}")
+            db.rollback()
+        finally:
+            db.close()
 
 async def promote_to_active_ads():
     # Promote queued ads to active based on bid_amount
@@ -50,6 +134,7 @@ async def promote_to_active_ads():
         while len(active_ads) < 3 and queued_ads:
             best_ad = queued_ads.pop(0)
             best_ad.status = AdStatus.active
+            best_ad.started_at = datetime.utcnow()
             active_ads.append(best_ad)
             made_changes = True
             await broadcast_log(f"[System] Promoted Ad {best_ad.id} to Active Ads (Budget: Rs.{best_ad.total_budget:.2f}).")
@@ -63,6 +148,7 @@ async def promote_to_active_ads():
                 
                 weakest_active.status = AdStatus.queued
                 best_queued.status = AdStatus.active
+                best_queued.started_at = datetime.utcnow()
                 
                 queued_ads.append(weakest_active)
                 active_ads.append(best_queued)
@@ -286,7 +372,7 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
         
         db.add(WaitingProduct(product_id=product.id))
         
-        # --- Seed 2 random eligible products to immediately trigger matchmaking ---
+        # --- Seed 15 random eligible products to immediately trigger matchmaking with high variance ---
         waiting_ids = [wp.product_id for wp in db.query(WaitingProduct).all()]
         waiting_ids.append(product.id)
         
@@ -295,13 +381,13 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
             ~Product.id.in_(waiting_ids)
         ).all()
         
-        if len(available_products) >= 2:
-            seed_products = random.sample(available_products, 2)
+        if len(available_products) >= 15:
+            seed_products = random.sample(available_products, 15)
             for sp in seed_products:
                 db.add(WaitingProduct(product_id=sp.id))
                 
             # Log outside the loop to avoid duplicate messages or await issues
-            await broadcast_log(f"[System] Automatically seeded 2 random products into waiting pool for demo matchmaking.")
+            await broadcast_log(f"[System] Automatically seeded 15 random products into waiting pool to force Matchmaker evaluation.")
         # -------------------------------------------------------------------------
         
         db.commit()
