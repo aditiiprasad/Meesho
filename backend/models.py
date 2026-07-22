@@ -62,9 +62,11 @@ class WaitingProduct(Base):
     __tablename__ = "waiting_products"
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"))
+    budget = Column(Float, default=100.0)
     added_at = Column(DateTime, default=datetime.utcnow)
 
 class AdStatus(str, enum.Enum):
+    matchmade = "matchmade"
     bidding = "bidding"
     queued = "queued"
     active = "active"
@@ -77,8 +79,8 @@ class AdType(str, enum.Enum):
 class AdGroup(Base):
     __tablename__ = "ad_groups"
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(Enum(AdStatus), default=AdStatus.bidding, index=True)
-    ad_type = Column(Enum(AdType), index=True)
+    status = Column(Enum(AdStatus, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=AdStatus.bidding, index=True)
+    ad_type = Column(Enum(AdType, values_callable=lambda obj: [e.value for e in obj], native_enum=False), index=True)
     
     # If individual
     big_seller_id = Column(Integer, ForeignKey("big_sellers.id"), nullable=True)

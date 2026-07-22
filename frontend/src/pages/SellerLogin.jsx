@@ -1,56 +1,50 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../config';
 
 export default function SellerLogin() {
  const [email, setEmail] = useState('');
  const [password, setPassword] = useState('');
  const [error, setError] = useState('');
+ const [loading, setLoading] = useState(false);
  const navigate = useNavigate();
 
- const handleLogin = async (e) => {
- e.preventDefault();
- try {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/seller-login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password }),
-  });
-  if (response.ok) {
-  const data = await response.json();
-  localStorage.setItem('user', JSON.stringify(data.user));
-  navigate('/seller-dashboard');
-  } else {
-  setError('Invalid credentials');
+ const doLogin = async (loginEmail, loginPassword) => {
+  setLoading(true);
+  setError('');
+  try {
+   const response = await fetch(`${API_URL}/api/seller-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+   });
+   const data = await response.json().catch(() => ({}));
+   if (response.ok && data.user) {
+    localStorage.setItem('user', JSON.stringify(data.user));
+    navigate('/seller-dashboard');
+   } else {
+    setError(data.detail || 'Invalid credentials');
+   }
+  } catch (err) {
+   setError(`Cannot reach backend at ${API_URL}. Start the server with: uvicorn main:app --reload`);
+  } finally {
+   setLoading(false);
   }
- } catch (err) {
-  setError('Failed to connect to the server');
- }
  };
 
- const handleGuestLogin = async (e) => {
- e.preventDefault();
- try {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/seller-login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'seller1@test.com', password: 'password' }),
-  });
-  if (response.ok) {
-  const data = await response.json();
-  localStorage.setItem('user', JSON.stringify(data.user));
-  navigate('/seller-dashboard');
-  } else {
-  setError('Invalid guest credentials');
-  }
- } catch (err) {
-  setError('Failed to connect to the server');
- }
+ const handleLogin = (e) => {
+  e.preventDefault();
+  doLogin(email, password);
+ };
+
+ const handleGuestLogin = (e) => {
+  e.preventDefault();
+  doLogin('seller1@test.com', 'password');
  };
 
  return (
  <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F6F0] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
   
-  {/* Header Branding */}
   <div className="z-10 mb-10 text-center">
   <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-[#410F29]">
    meesho
@@ -73,8 +67,9 @@ export default function SellerLogin() {
     type="email"
     autoComplete="email"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all"
-    placeholder="Email address (seller@acme.com)"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
+    placeholder="Email address"
     value={email}
     onChange={(e) => setEmail(e.target.value)}
     />
@@ -86,8 +81,9 @@ export default function SellerLogin() {
     type="password"
     autoComplete="current-password"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all"
-    placeholder="Password (password)"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
+    placeholder="Password"
     value={password}
     onChange={(e) => setPassword(e.target.value)}
     />
@@ -96,16 +92,18 @@ export default function SellerLogin() {
    <div className="space-y-4 pt-2">
    <button
     type="submit"
-    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all"
+    disabled={loading}
+    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50"
    >
-    Sign in
+    {loading ? 'Signing in...' : 'Sign in'}
    </button>
    <button
     type="button"
     onClick={handleGuestLogin}
-    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-lg font-black uppercase tracking-wider text-[#410F29] bg-[#F47216] transition-all"
+    disabled={loading}
+    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 text-lg font-black uppercase tracking-wider text-[#410F29] bg-[#F47216] transition-all disabled:opacity-50"
    >
-    Login as Guest Seller
+    {loading ? 'Logging in...' : 'Login as Guest Seller'}
    </button>
    </div>
    <div className="text-center text-sm pt-4 font-black uppercase tracking-wider">

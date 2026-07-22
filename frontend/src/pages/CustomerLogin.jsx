@@ -1,50 +1,45 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../config';
 
 export default function CustomerLogin() {
  const [email, setEmail] = useState('');
  const [password, setPassword] = useState('');
  const [error, setError] = useState('');
+ const [loading, setLoading] = useState(false);
  const navigate = useNavigate();
 
- const handleLogin = async (e) => {
- e.preventDefault();
- try {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/customer-login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password }),
-  });
-  if (response.ok) {
-  const data = await response.json();
-  localStorage.setItem('user', JSON.stringify(data.user));
-  navigate('/customer-feed');
-  } else {
-  setError('Invalid credentials');
+ const doLogin = async (loginEmail, loginPassword) => {
+  setLoading(true);
+  setError('');
+  try {
+   const response = await fetch(`${API_URL}/api/customer-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+   });
+   const data = await response.json().catch(() => ({}));
+   if (response.ok && data.user) {
+    localStorage.setItem('user', JSON.stringify(data.user));
+    navigate('/customer-feed');
+   } else {
+    setError(data.detail || 'Invalid credentials');
+   }
+  } catch (err) {
+   setError(`Cannot reach backend at ${API_URL}. Start the server first.`);
+  } finally {
+   setLoading(false);
   }
- } catch (err) {
-  setError('Failed to connect to the server');
- }
  };
 
- const handleGuestLogin = async (e) => {
- e.preventDefault();
- try {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/customer-login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'customer@example.com', password: 'password' }),
-  });
-  if (response.ok) {
-  const data = await response.json();
-  localStorage.setItem('user', JSON.stringify(data.user));
-  navigate('/customer-feed');
-  } else {
-  setError('Invalid guest credentials');
-  }
- } catch (err) {
-  setError('Failed to connect to the server');
- }
+ const handleLogin = (e) => {
+  e.preventDefault();
+  doLogin(email, password);
+ };
+
+ const handleGuestLogin = (e) => {
+  e.preventDefault();
+  doLogin('customer@example.com', 'password');
  };
 
  return (

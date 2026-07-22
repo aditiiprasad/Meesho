@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, ShoppingCart, LogOut } from 'lucide-react';
+import { API_URL } from '../config';
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
-  return url.startsWith('/') ? `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${url}` : url;
+  return url.startsWith('/') ? `${API_URL}${url}` : url;
 };
 
 function SmartComboAd({ comboAd }) {
@@ -15,7 +16,7 @@ function SmartComboAd({ comboAd }) {
 
   const handleAdClick = async (productId, adId) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/ads/click`, {
+      const response = await fetch(`${API_URL}/api/ads/click`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: productId, ad_id: adId })
@@ -126,13 +127,13 @@ export default function CustomerFeed() {
     setUser(parsedUser);
     
     // Fetch products
-    fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/products`)
+    fetch(`${API_URL}/api/products`)
       .then(res => res.json())
       .then(data => setProducts(data));
 
     // Fetch combo ad
     const fetchCombo = () => {
-      fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/combo-ads/active`)
+      fetch(`${API_URL}/api/combo-ads/active`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

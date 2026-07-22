@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from '../config';
 
 export default function CustomerRegister() {
  const [name, setName] = useState('');
@@ -11,7 +12,7 @@ export default function CustomerRegister() {
  const handleRegister = async (e) => {
  e.preventDefault();
  try {
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/customer-register`, {
+  const response = await fetch(`${API_URL}/api/customer-register`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ name, email, password }),
