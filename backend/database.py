@@ -4,15 +4,11 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import create_engine, text, or_
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
+from demo_config import get_database_url, LOCAL_DEMO
 from models import Base, Product, Seller, Customer
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mock_v4.db")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = get_database_url()
 
 engine = create_engine(
     DATABASE_URL,
@@ -214,7 +210,7 @@ def ensure_demo_accounts(db):
 
 def migrate_postgres_enums():
     """Add new enum values to existing PostgreSQL databases."""
-    if "postgres" not in DATABASE_URL.lower():
+    if LOCAL_DEMO or "postgres" not in DATABASE_URL.lower():
         return
     with engine.connect() as conn:
         conn = conn.execution_options(isolation_level="AUTOCOMMIT")

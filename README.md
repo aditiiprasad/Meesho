@@ -48,11 +48,11 @@ Home → Guest Seller Login → Join Ad Ne Bana Di Jodi (eligibility + product c
 | Seller | `seller1@test.com` / `password` (or **Guest Seller** button) |
 | Customer | `customer@example.com` / `password` (or **Guest Customer** button) |
 
-Quick start:
+Quick start (no `.env` needed):
 
 ```bash
 ./start-demo.sh
-# Backend  → http://127.0.0.1:8000
+# Backend  → http://127.0.0.1:8000  (SQLite mock_v4.db, in-memory metrics)
 # Frontend → http://127.0.0.1:5173
 ```
 
@@ -75,7 +75,8 @@ Meesho/
 │   ├── database.py             # DB connection, seeding, migrations
 │   ├── requirements.txt
 │   ├── runtime.txt             # Python 3.11.9
-│   ├── .env                    # DATABASE_URL, REDIS_URL, GEMINI_API_KEY, CLOUDINARY_URL
+│   ├── demo_config.py          # LOCAL_DEMO mode (SQLite, no external services)
+│   ├── .env                    # Optional: production DATABASE_URL, Redis, Gemini, Cloudinary
 │   └── static/                 # Fallback combo ad images (local CDN)
 │
 └── frontend/
@@ -304,13 +305,21 @@ sequenceDiagram
 
 ## Setup
 
-### Prerequisites
+### Local demo (recommended for hackathon)
 
-- Node.js 18+
-- Python 3.11+
-- Accounts: [Neon](https://neon.tech) (Postgres), [Upstash](https://upstash.com) (Redis), [Cloudinary](https://cloudinary.com), [Google AI Studio](https://aistudio.google.com) (Gemini)
+No accounts or `.env` file required. `./start-demo.sh` sets `LOCAL_DEMO=1`, which:
 
-### Environment (`backend/.env`)
+- Uses **SQLite** (`backend/mock_v4.db`) — pre-seeded data ships with the repo
+- Skips Neon, Upstash Redis, Gemini, and Cloudinary (lexical embeddings + local images)
+- Runs 3 matchmade trios per click (fast for live demos)
+
+```bash
+./start-demo.sh
+```
+
+### Production / cloud deploy (optional)
+
+For Neon Postgres, Redis, Gemini, and Cloudinary, create `backend/.env` and run **without** `LOCAL_DEMO=1`:
 
 ```env
 DATABASE_URL=postgresql://user:pass@host/neondb?sslmode=require
@@ -320,15 +329,9 @@ CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 FRONTEND_URL=http://127.0.0.1:5173
 ```
 
-Without `.env`, the backend falls back to **SQLite** (`mock_v4.db`) and in-memory Redis.
-
-### Run locally
+Manual run:
 
 ```bash
-# Option A — one command
-./start-demo.sh
-
-# Option B — manual
 cd backend && python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload

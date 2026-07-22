@@ -21,7 +21,7 @@ export default function SellerDashboard() {
  const [adPoolBudget, setAdPoolBudget] = useState(50);
  const [adPoolProductId, setAdPoolProductId] = useState('');
  const [isDeploying, setIsDeploying] = useState(false);
- const [metrics, setMetrics] = useState({ active: false, reach: 0, clicks: 0, pooling_count: 0 });
+ const [metrics, setMetrics] = useState({ active: false, pooling_count: 0, active_ads: [] });
 
  const [adPoolState, setAdPoolState] = useState('initial');
  const [sellerDetails, setSellerDetails] = useState(null);
@@ -71,7 +71,7 @@ export default function SellerDashboard() {
  setUser(null);
  setProducts([]);
  setSellerDetails(null);
- setMetrics({ active: false, reach: 0, clicks: 0, remaining_budget: 0, active_ads: [] });
+ setMetrics({ active: false, pooling_count: 0, active_ads: [] });
  navigate('/');
  };
 
@@ -168,10 +168,12 @@ export default function SellerDashboard() {
    });
    
    if (response.ok) {
-    const newProduct = await response.json();
-    setProducts(prev => [...prev, newProduct]);
     setIsModalOpen(false);
     setFormData({ title: '', price: '', image: null, category: '', stock: '' });
+    const refreshed = await fetch(`${API_URL}/api/seller/products?seller_id=${user.id}`);
+    if (refreshed.ok) {
+     setProducts(await refreshed.json());
+    }
    } else {
     console.error('Failed to add product');
    }
@@ -234,14 +236,22 @@ export default function SellerDashboard() {
   }
  };
 
- const handlePayBalance = async () => {
+ const refreshMetrics = () => {
+  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`)
+   .then(r => r.json())
+   .then(setMetrics)
+   .catch(err => console.error("Metrics error:", err));
+ };
+
+ const handlePayBalance = async (productId) => {
   try {
-   const res = await fetch(`${API_URL}/api/seller/pay?seller_id=${user.id}`, {
-    method: 'POST'
-   });
+   const url = productId
+    ? `${API_URL}/api/seller/pay?seller_id=${user.id}&product_id=${productId}`
+    : `${API_URL}/api/seller/pay?seller_id=${user.id}`;
+   const res = await fetch(url, { method: 'POST' });
    if (res.ok) {
     alert("Payment successful!");
-    setMetrics(prev => ({ ...prev, clicks: 0 }));
+    refreshMetrics();
    }
   } catch (e) {
    console.error(e);
@@ -361,7 +371,7 @@ export default function SellerDashboard() {
          >
           <option value="">-- Select a product for Quality Check --</option>
           {products.map(p => (
-           <option key={p.id} value={p.id}>{p.title} (₹{p.price.toFixed(2)})</option>
+           <option key={p.id} value={p.id}>{p.title} (₹{Number(p.price).toFixed(2)})</option>
           ))}
          </select>
         </div>
@@ -473,70 +483,74 @@ export default function SellerDashboard() {
     </div>
    )}
 
-   {/* Active Campaigns */}
-   {metrics.active && (
+   {/* Active Campaigns — one card per product with its own metrics */}
+   {metrics.active && metrics.active_ads?.length > 0 && (
     <div className="p-8 bg-white border-t-[4px] border-black">
     <div className="flex items-center justify-between mb-6">
      <h3 className="text-2xl font-black tracking-tighter uppercase text-[#410F29]">Active Campaigns</h3>
-     <div className="flex items-center space-x-3">
-       <button onClick={handlePayBalance} className="bg-[#410F29] text-white text-sm font-black uppercase tracking-wider px-4 py-2 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all">Pay Outstanding Balance</button>
-       <span className="bg-[#F47216] text-[#410F29] text-xs font-black px-3 py-1 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider">Live</span>
-     </div>
+     <span className="bg-[#F47216] text-[#410F29] text-xs font-black px-3 py-1 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider">Live</span>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Remaining Ad Budget</span>
-     <span className="text-4xl font-black mt-2 text-[#410F29]">₹{metrics.remaining_budget ? metrics.remaining_budget.toFixed(2) : '0.00'}</span>
-     </div>
-     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Your Pro-Rated Clicks</span>
-     <span className="text-4xl font-black mt-2 text-[#410F29]">{metrics.clicks ? metrics.clicks.toLocaleString() : 0}</span>
-     </div>
-     <div className="bg-white p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-     <span className="text-xs font-black text-gray-700 uppercase tracking-wider text-center">Total Spend</span>
-     <span className="text-4xl font-black mt-2 text-[#410F29]">₹{metrics.clicks ? (metrics.clicks * 2.0).toFixed(2) : '0.00'}</span>
-     </div>
-     <div className="bg-[#F47216] p-6 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-     <span className="text-xs font-black text-[#410F29] uppercase tracking-wider text-center">Sales Generated</span>
-     <span className="text-4xl font-black mt-2 text-white">₹{metrics.clicks ? (metrics.clicks * 0.12 * 80).toFixed(0).toLocaleString() : 0}</span>
-     </div>
-    </div>
-    
-    {metrics.active_ads && metrics.active_ads.length > 0 && (
-     <div>
-      <h4 className="text-lg font-black uppercase tracking-wider text-[#410F29] mb-4">Your Sponsored Combo Ads</h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-       {metrics.active_ads.map(ad => {
-        const myProduct = ad.products.find(p => p.seller_id === user.id);
-        if (!myProduct) return null;
-        return (
-         <div key={ad.id} className="bg-white rounded-2xl overflow-hidden border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col">
-          <img src={myProduct.image_url.startsWith('/') ? `${API_URL}${myProduct.image_url}` : myProduct.image_url} alt={myProduct.title} className="w-full h-40 object-cover border-b-[3px] border-black" />
-          <div className="p-4 flex-grow flex flex-col">
-           <h5 className="font-black text-[#410F29] mb-1 uppercase tracking-tight">{myProduct.title}</h5>
-           <p className="text-xs font-black text-[#F47216] mb-3 uppercase tracking-wider">
-            Running in Ad Slot #{ad.id}
-            {ad.seconds_remaining != null && ` · ${Math.floor(ad.seconds_remaining / 60)}m ${ad.seconds_remaining % 60}s left`}
-           </p>
-           
-           <div className="flex justify-between items-center pt-3 border-t-[3px] border-black mb-3">
-            <span className="text-sm font-black text-gray-700 uppercase">Clicks Generated</span>
-            <span className="bg-[#F47216]/10 text-[#F47216] font-black px-3 py-1 border-[2px] border-[#F47216] rounded-xl text-lg">{metrics.clicks ? metrics.clicks.toLocaleString() : 0}</span>
-           </div>
 
-           <button 
-            onClick={() => handleRemoveFromPool(myProduct.id)}
-            className="w-full mt-auto bg-red-100 text-red-600 font-black uppercase tracking-wider py-2 rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all"
-           >
-            Remove from Pool
-           </button>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+     {metrics.active_ads.map(ad => {
+      const myProduct = ad.products.find(p => p.seller_id === user.id);
+      if (!myProduct) return null;
+      const clicks = myProduct.clicks ?? 0;
+      const remainingBudget = myProduct.remaining_budget ?? 0;
+      const totalSpend = myProduct.total_spend ?? clicks * 2;
+      const salesGenerated = myProduct.sales_generated ?? Math.round(clicks * 0.12 * 80);
+      return (
+       <div key={`${ad.id}-${myProduct.id}`} className="bg-[#F8F6F0] rounded-2xl overflow-hidden border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col">
+        <img
+         src={myProduct.image_url?.startsWith('/') ? `${API_URL}${myProduct.image_url}` : myProduct.image_url}
+         alt={myProduct.title}
+         className="w-full h-44 object-cover border-b-[3px] border-black"
+        />
+        <div className="p-5 flex-grow flex flex-col">
+         <h5 className="font-black text-[#410F29] mb-1 uppercase tracking-tight text-lg">{myProduct.title}</h5>
+         <p className="text-xs font-black text-[#F47216] mb-4 uppercase tracking-wider">
+          Ad Slot #{ad.id}
+          {ad.seconds_remaining != null && ` · ${Math.floor(ad.seconds_remaining / 60)}m ${ad.seconds_remaining % 60}s left`}
+         </p>
+
+         <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-white p-4 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-center">
+           <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider block">Remaining Budget</span>
+           <span className="text-2xl font-black text-[#410F29] mt-1">₹{remainingBudget.toFixed(2)}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-center">
+           <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider block">Clicks</span>
+           <span className="text-2xl font-black text-[#410F29] mt-1">{clicks.toLocaleString()}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-center">
+           <span className="text-[10px] font-black text-gray-600 uppercase tracking-wider block">Total Spend</span>
+           <span className="text-2xl font-black text-[#410F29] mt-1">₹{totalSpend.toFixed(2)}</span>
+          </div>
+          <div className="bg-[#F47216] p-4 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-center">
+           <span className="text-[10px] font-black text-[#410F29] uppercase tracking-wider block">Sales Generated</span>
+           <span className="text-2xl font-black text-white mt-1">₹{salesGenerated.toLocaleString()}</span>
           </div>
          </div>
-        );
-       })}
-      </div>
-     </div>
-    )}
+
+         <div className="flex gap-3 mt-auto">
+          <button
+           onClick={() => handlePayBalance(myProduct.id)}
+           className="flex-1 bg-[#410F29] text-white text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+          >
+           Pay Balance
+          </button>
+          <button
+           onClick={() => handleRemoveFromPool(myProduct.id)}
+           className="flex-1 bg-red-100 text-red-600 text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 transition-all"
+          >
+           Remove from Pool
+          </button>
+         </div>
+        </div>
+       </div>
+      );
+     })}
+    </div>
     </div>
    )}
    </div>
@@ -599,7 +613,7 @@ export default function SellerDashboard() {
       </div>
       <div className="mt-auto flex items-center justify-between pt-4">
        <div className="text-2xl font-black text-[#095955]">
-       ₹{product.price.toFixed(2)}
+       ₹{Number(product.price).toFixed(2)}
        </div>
        <div className="text-xs font-black uppercase tracking-wider text-gray-700 bg-gray-100 px-3 py-1.5 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
        Stock: <span className={product.stock > 0 ? "text-[#095955] ml-1" : "text-red-500 ml-1"}>{product.stock}</span>

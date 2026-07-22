@@ -2,13 +2,11 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import declarative_base
 from pydantic import BaseModel
 from typing import Optional
-import os
-from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+from demo_config import get_database_url
 
 # PostgreSQL (Neon) uses native enum columns; SQLite uses string storage.
-_USE_NATIVE_ENUM = "postgres" in os.getenv("DATABASE_URL", "sqlite").lower()
+_USE_NATIVE_ENUM = "postgres" in get_database_url().lower()
 
 def _ad_enum(enum_cls, **kwargs):
     return Enum(

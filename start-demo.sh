@@ -3,7 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-echo "==> Meesho Ad Ne Bana Di Jodi — Demo Startup"
+echo "==> Meesho Ad Ne Bana Di Jodi — Local Demo Startup"
+echo ""
+echo "Mode: LOCAL DEMO (SQLite, no .env / DATABASE_URL required)"
 echo ""
 
 # Backend setup
@@ -38,6 +40,15 @@ cleanup() {
   kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
+
+export LOCAL_DEMO=1
+
+# Free port 8000 if a previous backend is still running
+if lsof -ti:8000 >/dev/null 2>&1; then
+  echo "Stopping previous backend on port 8000..."
+  lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+  sleep 0.5
+fi
 
 (cd "$ROOT/backend" && source venv/bin/activate && uvicorn main:app --host 127.0.0.1 --port 8000) &
 BACKEND_PID=$!

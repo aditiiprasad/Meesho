@@ -1,10 +1,11 @@
 import os
 from typing import Optional
-from dotenv import load_dotenv
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-import cloudinary
-cloudinary.config()
+from demo_config import LOCAL_DEMO, MATCHMAKE_BATCH_SIZE, WAITING_POOL_TARGET, AUTO_MATCHMAKE_ON_JOIN
+
+if not LOCAL_DEMO:
+    import cloudinary
+    cloudinary.config()
 
 import asyncio
 from contextlib import asynccontextmanager
@@ -15,7 +16,6 @@ from sqlalchemy import or_
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import cloudinary.uploader
 import io
 import random
 from datetime import datetime, timedelta
@@ -38,6 +38,29 @@ MAX_ACTIVE_ADS = 3
 MAX_POOLING_PRODUCTS_PER_SELLER = 3
 AD_RUNTIME_HOURS = 1
 CLICK_COST = 2.0
+
+
+def serialize_product(product: Product) -> dict:
+    return {
+        "id": product.id,
+        "title": product.title,
+        "description": product.description,
+        "price": product.price,
+        "image_url": product.image_url,
+        "category": product.category,
+        "stock": product.stock,
+        "rating": product.rating,
+        "return_rate": product.return_rate,
+        "order_cancellation_rate": product.order_cancellation_rate,
+        "policy_violation_score": product.policy_violation_score,
+        "completed_orders": product.completed_orders,
+        "seller_id": product.seller_id,
+    }
+
+
+async def get_product_clicks(product_id: int) -> int:
+    clicks = await redis_hget("click_metrics", str(product_id))
+    return int(clicks) if clicks else 0
 
 
 def return_pooled_products_to_waiting(db, ad: AdGroup, exclude_product_ids: Optional[set] = None):
@@ -108,6 +131,8 @@ async def remove_active_ad_by_id(ad_id: int):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if LOCAL_DEMO:
+        print("LOCAL DEMO mode: SQLite (mock_v4.db), in-memory metrics, no .env required.")
     await asyncio.to_thread(seed_data)
     print("Database seeded and ready.")
     task = asyncio.create_task(background_orchestrator())
@@ -179,10 +204,19 @@ app = FastAPI(lifespan=lifespan)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+def _parse_cors_origins(raw: str) -> list[str]:
+    if raw.strip() == "*":
+        return ["*"]
+    origins = []
+    for origin in raw.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            origins.append(cleaned)
+    return origins or ["*"]
+
+
 _cors_origins = os.getenv("FRONTEND_URL", "*")
-allow_origins = ["*"] if _cors_origins.strip() == "*" else [
-    origin.strip() for origin in _cors_origins.split(",") if origin.strip()
-]
+allow_origins = _parse_cors_origins(_cors_origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
@@ -251,12 +285,16 @@ def customer_login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
-    seller = db.query(Seller).filter(Seller.email == "seller1@test.com").first()
-    return {
-        "status": "ok",
-        "demo_seller_ready": seller is not None,
-        "products": db.query(Product).count(),
-    }
+    try:
+        seller = db.query(Seller).filter(Seller.email == "seller1@test.com").first()
+        return {
+            "status": "ok",
+            "mode": "local_demo" if LOCAL_DEMO else "production",
+            "demo_seller_ready": seller is not None,
+            "products": db.query(Product).count(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {e}")
 
 
 @app.get("/api/products")
@@ -299,12 +337,20 @@ async def create_seller_product(
 ):
     image_url = ""
     if image:
-        try:
-            content = await image.read()
-            upload_result = cloudinary.uploader.upload(io.BytesIO(content), folder="meesho-ads")
-            image_url = upload_result['secure_url']
-        except Exception as e:
-            print("Failed to upload image:", e)
+        content = await image.read()
+        if LOCAL_DEMO:
+            os.makedirs("static", exist_ok=True)
+            fname = f"product-{random.randint(1000, 9999)}.jpg"
+            with open(f"static/{fname}", "wb") as f:
+                f.write(content)
+            image_url = f"/static/{fname}"
+        else:
+            import cloudinary.uploader
+            try:
+                upload_result = cloudinary.uploader.upload(io.BytesIO(content), folder="meesho-ads")
+                image_url = upload_result['secure_url']
+            except Exception as e:
+                print("Failed to upload image:", e)
 
     new_product = Product(
         title=title,
@@ -329,7 +375,7 @@ async def create_seller_product(
         seller.catalog_size = db.query(Product).filter(Product.seller_id == seller_id).count()
         db.commit()
 
-    return new_product
+    return serialize_product(new_product)
 
 
 class RemovePoolRequest(BaseModel):
@@ -384,8 +430,25 @@ async def pool_remove(req: RemovePoolRequest, db: Session = Depends(get_db)):
 
 
 @app.post("/api/seller/pay")
-async def seller_pay(seller_id: int):
-    await redis_hset("click_metrics", str(seller_id), 0)
+async def seller_pay(
+    seller_id: int,
+    product_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    if product_id is not None:
+        product = db.query(Product).filter(
+            Product.id == product_id,
+            Product.seller_id == seller_id,
+        ).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        await redis_hset("click_metrics", str(product_id), 0)
+    else:
+        product_ids = [
+            p.id for p in db.query(Product.id).filter(Product.seller_id == seller_id).all()
+        ]
+        for pid in product_ids:
+            await redis_hset("click_metrics", str(pid), 0)
     return {"message": "Payment successful"}
 
 
@@ -428,18 +491,19 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
     if product.rating < 4.0:
         raise HTTPException(status_code=400, detail="Product rating must be 4.0 or higher.")
 
-    await redis_hsetnx("click_metrics", str(req.seller_id), 0)
+    await redis_hsetnx("click_metrics", str(req.product_id), 0)
 
     db.add(WaitingProduct(product_id=product.id, budget=req.budget))
     db.commit()
 
-    seeded = seed_waiting_pool(db, exclude_product_ids={req.product_id}, target_count=30)
+    seeded = seed_waiting_pool(db, exclude_product_ids={req.product_id}, target_count=WAITING_POOL_TARGET)
     await broadcast_log(f"[Gatekeeper] Seller {req.seller_id} joined pool with product {req.product_id}. Seeded {seeded} additional products.")
 
     waiting_count = db.query(WaitingProduct).count()
     matchmade_count = db.query(AdGroup).filter(AdGroup.status == AdStatus.matchmade).count()
 
-    asyncio.create_task(check_waiting_pool())
+    if AUTO_MATCHMAKE_ON_JOIN:
+        asyncio.create_task(check_waiting_pool())
 
     return {
         "message": "Successfully joined Ad-Pool",
@@ -455,13 +519,13 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
 async def pool_matchmake(db: Session = Depends(get_db)):
     waiting_count = db.query(WaitingProduct).count()
     if waiting_count < 3:
-        seeded = seed_waiting_pool(db, target_count=30)
+        seeded = seed_waiting_pool(db, target_count=WAITING_POOL_TARGET)
         await broadcast_log(f"[System] Waiting pool low — seeded {seeded} more products.")
         waiting_count = db.query(WaitingProduct).count()
         if waiting_count < 3:
             raise HTTPException(status_code=400, detail="Not enough products in waiting pool for matchmaking.")
 
-    created = await matchmake_optimized_trios(count=10)
+    created = await matchmake_optimized_trios(count=MATCHMAKE_BATCH_SIZE)
     matchmade_count = db.query(AdGroup).filter(AdGroup.status == AdStatus.matchmade).count()
 
     return {
@@ -573,9 +637,18 @@ async def ad_click(req: AdClickRequest, db: Session = Depends(get_db)):
             db.commit()
         return {"message": "Click attributed", "remaining_budget": max(0, ad.total_budget)}
 
+    if not req.product_id:
+        raise HTTPException(status_code=400, detail="product_id is required for pooled ad clicks.")
+
     product = db.query(Product).filter(Product.id == req.product_id).first()
-    if product:
-        await redis_hincrby("click_metrics", str(product.seller_id), 1)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found.")
+
+    ad_product_ids = {ad.product_1_id, ad.product_2_id, ad.product_3_id}
+    if req.product_id not in ad_product_ids:
+        raise HTTPException(status_code=400, detail="Product is not part of this ad.")
+
+    await redis_hincrby("click_metrics", str(req.product_id), 1)
 
     ad.total_budget -= CLICK_COST
     if ad.total_budget <= 0:
@@ -740,9 +813,6 @@ def get_seller_pipeline(seller_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/seller/metrics")
 async def get_seller_metrics(seller_id: int, db: Session = Depends(get_db)):
-    clicks = await redis_hget("click_metrics", str(seller_id))
-    clicks = int(clicks) if clicks else 0
-
     products = db.query(Product).filter(Product.seller_id == seller_id).all()
     product_ids = [p.id for p in products]
     product_by_id = {p.id: p for p in products}
@@ -757,15 +827,26 @@ async def get_seller_metrics(seller_id: int, db: Session = Depends(get_db)):
     ).all()
 
     seller_active_ads = []
-    remaining_budget = 0.0
     for ad in seller_ads:
         products_data = []
+        per_product_budget = round(ad.total_budget / 3, 2) if ad.ad_type == AdType.pooled else ad.total_budget
         for pid in [ad.product_1_id, ad.product_2_id, ad.product_3_id]:
             p = product_by_id.get(pid)
             if p:
-                products_data.append({
-                    "id": p.id, "title": p.title, "seller_id": p.seller_id, "image_url": p.image_url,
-                })
+                is_mine = p.seller_id == seller_id
+                product_clicks = await get_product_clicks(p.id) if is_mine else 0
+                product_entry = {
+                    "id": p.id,
+                    "title": p.title,
+                    "seller_id": p.seller_id,
+                    "image_url": p.image_url,
+                    "clicks": product_clicks,
+                }
+                if is_mine and ad.status == AdStatus.active:
+                    product_entry["remaining_budget"] = per_product_budget
+                    product_entry["total_spend"] = round(product_clicks * CLICK_COST, 2)
+                    product_entry["sales_generated"] = round(product_clicks * 0.12 * 80)
+                products_data.append(product_entry)
         if products_data:
             runtime = ad_runtime_info(ad)
             seller_active_ads.append({
@@ -775,22 +856,25 @@ async def get_seller_metrics(seller_id: int, db: Session = Depends(get_db)):
                 "total_budget": ad.total_budget,
                 **runtime,
             })
-            if ad.status == AdStatus.active:
-                remaining_budget = ad.total_budget / 3
 
     pooling_count = len(get_products_in_pooling(db, seller_id))
 
-    exists = await redis_hexists("click_metrics", str(seller_id))
-    if not seller_ads and not exists and pooling_count == 0:
-        return {"active": False, "active_ads": [], "pooling_count": 0, "clicks": 0}
+    if product_ids:
+        click_exists = await asyncio.gather(
+            *[redis_hexists("click_metrics", str(pid)) for pid in product_ids]
+        )
+        has_click_data = any(click_exists)
+    else:
+        has_click_data = False
+
+    if not seller_ads and not has_click_data and pooling_count == 0:
+        return {"active": False, "active_ads": [], "pooling_count": 0, "all_ads": []}
 
     has_active = any(a["status"] == AdStatus.active for a in seller_active_ads)
+    active_ads = [a for a in seller_active_ads if a["status"] == AdStatus.active]
     return {
         "active": has_active,
-        "reach": 12450 * sum(1 for a in seller_active_ads if a["status"] == AdStatus.active) or 12450,
-        "remaining_budget": remaining_budget,
-        "clicks": clicks,
-        "active_ads": [a for a in seller_active_ads if a["status"] == AdStatus.active],
+        "active_ads": active_ads,
         "all_ads": seller_active_ads,
         "pooling_count": pooling_count,
     }

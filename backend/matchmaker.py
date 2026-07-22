@@ -1,3 +1,18 @@
+"""
+7-Layer Jodi Maker — matchmaking pipeline
+==========================================
+
+Stage 0  Load pool        waiting_products → eligible PoolEntry list
+Stage 1  Gatekeeper        quality + micro-seller filters
+Stage 2  Template match    Outfit / Home Decor / Cricket Kit combos
+Stage 3  Semantic harmony  Gemini embeddings (or lexical fallback) — 40%
+Stage 4  Audience affinity segment + price + GMV alignment — 30%
+Stage 5  Budget harmonize  similar pooled budgets — 20%
+Stage 6  CTR optimization  average product rating — 10%
+Stage 7  Wildcard fallback any valid trio when templates fail
+Stage 8  Creative Compositor  stitch 3×300 → 900×300 banner → ad_groups
+"""
+
 import os
 import io
 import random
@@ -11,16 +26,14 @@ from PIL import Image
 import redis.asyncio as redis
 import cloudinary
 import cloudinary.uploader
-from dotenv import load_dotenv
 from sklearn.metrics.pairwise import cosine_similarity
 
+from demo_config import LOCAL_DEMO, USE_GEMINI_EMBEDDINGS
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Product, WaitingProduct, AdGroup, AdStatus, AdType, Seller
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
-# --- 7-Layer Jodi Maker configuration ---
+# --- Stage config: templates (Layer 2), audience map (Layer 4), weights (Layers 3–6) ---
 TEMPLATES = {
     "The Outfit": ["Top", "Bottom", "Accessory"],
     "Home Decor": ["Bedsheet", "Lamp", "Fairy Lights"],
@@ -46,24 +59,25 @@ EMBEDDING_MODEL = "models/gemini-embedding-001"
 _gemini_ready = False
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-if "upstash.io" in REDIS_URL and REDIS_URL.startswith("redis://"):
+if not LOCAL_DEMO and "upstash.io" in REDIS_URL and REDIS_URL.startswith("redis://"):
     REDIS_URL = REDIS_URL.replace("redis://", "rediss://")
 
 _redis_client = None
-_redis_unavailable = False
+_redis_unavailable = LOCAL_DEMO
 _memory_logs: asyncio.Queue = asyncio.Queue()
 _memory_metrics: dict = {}
 
 
+# --- Infrastructure: Redis pub/sub for Demo Console live logs + click metrics ---
 async def get_redis():
     global _redis_client, _redis_unavailable
-    if _redis_unavailable:
+    if LOCAL_DEMO or _redis_unavailable:
         return None
     if _redis_client is not None:
         return _redis_client
     try:
         client = redis.from_url(REDIS_URL, decode_responses=True, ssl_cert_reqs="none")
-        await asyncio.wait_for(client.ping(), timeout=1.0)
+        await asyncio.wait_for(client.ping(), timeout=3.0)
         _redis_client = client
         return client
     except Exception as e:
@@ -152,9 +166,15 @@ class PoolEntry:
     seller: Seller
 
 
+# --- Layer 3 helpers: Gemini embeddings + lexical fallback ---
 def _configure_gemini() -> bool:
+    """Return True only when USE_GEMINI_EMBEDDINGS is enabled in demo_config."""
+    if not USE_GEMINI_EMBEDDINGS:
+        return False
     global _gemini_ready
-    api_key = os.getenv("GEMINI_API_KEY")
+    if LOCAL_DEMO:
+        return False
+    api_key = (os.getenv("GEMINI_API_KEY") or "").strip()
     if not api_key:
         return False
     if not _gemini_ready:
@@ -195,38 +215,40 @@ def _fallback_embedding(text: str) -> np.ndarray:
 
 
 async def _embed_products(products: list[Product]) -> dict[int, np.ndarray]:
+    """Layer 3 — build semantic vectors for all pool products (Gemini or fallback)."""
     missing = [p for p in products if p.id not in _embedding_cache]
     if not missing:
         return _embedding_cache
 
-    if _configure_gemini():
-        import google.generativeai as genai
-
-        async def _embed_one(product: Product):
-            try:
-                result = await asyncio.to_thread(
-                    genai.embed_content,
-                    model=EMBEDDING_MODEL,
-                    content=_product_text(product),
-                    task_type="SEMANTIC_SIMILARITY",
-                )
-                vec = np.array(result["embedding"], dtype=float)
-                _embedding_cache[product.id] = _normalize_embedding(vec)
-            except Exception as e:
-                print(f"Gemini embed failed for product {product.id}: {e}")
-                _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
-
-        await asyncio.gather(*[_embed_one(p) for p in missing])
-    else:
-        await broadcast_log("[Layer 3] Gemini unavailable — using lexical fallback embeddings.")
-        for product in missing:
-            _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
+    # Gemini embeddings disabled (USE_GEMINI_EMBEDDINGS=False) — lexical fallback only.
+    # if _configure_gemini():
+    #     import google.generativeai as genai
+    #
+    #     async def _embed_one(product: Product):
+    #         try:
+    #             result = await asyncio.to_thread(
+    #                 genai.embed_content,
+    #                 model=EMBEDDING_MODEL,
+    #                 content=_product_text(product),
+    #                 task_type="SEMANTIC_SIMILARITY",
+    #             )
+    #             vec = np.array(result["embedding"], dtype=float)
+    #             _embedding_cache[product.id] = _normalize_embedding(vec)
+    #         except Exception as e:
+    #             print(f"Gemini embed failed for product {product.id}: {e}")
+    #             _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
+    #
+    #     await asyncio.gather(*[_embed_one(p) for p in missing])
+    # else:
+    await broadcast_log("[Layer 3] Using lexical fallback embeddings (Gemini disabled).")
+    for product in missing:
+        _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
 
     return _embedding_cache
 
 
+# --- Layer 1: Gatekeeper — filter waiting pool before scoring ---
 def gatekeeper_eligible(product: Product, seller: Seller) -> bool:
-    """Layer 1: quality + micro-seller eligibility."""
     if product.rating < 4.0:
         return False
     if product.return_rate >= 10.0:
@@ -236,8 +258,8 @@ def gatekeeper_eligible(product: Product, seller: Seller) -> bool:
     return True
 
 
+# --- Layers 3–6: individual fitness signals ---
 def _semantic_harmony_score(products: list[Product], embeddings: dict[int, np.ndarray]) -> float:
-    """Layer 3: average pairwise cosine similarity of product embeddings."""
     vecs = [embeddings[p.id] for p in products if p.id in embeddings]
     if len(vecs) < 2:
         return 0.5
@@ -250,7 +272,7 @@ def _semantic_harmony_score(products: list[Product], embeddings: dict[int, np.nd
 
 
 def _audience_affinity_score(products: list[Product], sellers: list[Seller]) -> float:
-    """Layer 4: overlapping demographics via segment + price + seller scale."""
+    """Layer 4 — same buyer segment, similar price band, similar seller scale."""
     segments = [AUDIENCE_SEGMENTS.get(p.category, "general") for p in products]
     segment_score = 1.0 if len(set(segments)) == 1 else 0.55 if len(set(segments)) == 2 else 0.25
 
@@ -266,7 +288,7 @@ def _audience_affinity_score(products: list[Product], sellers: list[Seller]) -> 
 
 
 def _budget_harmonization_score(budgets: list[float]) -> float:
-    """Layer 5: prefer similar budgets (low coefficient of variation)."""
+    """Layer 5 — penalize trios where one seller contributed much more budget."""
     if not budgets:
         return 0.0
     mean = sum(budgets) / len(budgets)
@@ -278,7 +300,7 @@ def _budget_harmonization_score(budgets: list[float]) -> float:
 
 
 def _ctr_optimization_score(products: list[Product]) -> float:
-    """Layer 6: boost combos with higher average ratings."""
+    """Layer 6 — higher-rated products → expected better click-through."""
     return sum(p.rating for p in products) / (5.0 * len(products))
 
 
@@ -287,6 +309,7 @@ def _fitness_score(
     embeddings: dict[int, np.ndarray],
     template_name: Optional[str],
 ) -> float:
+    """Combine Layers 3–6 into one score; bonus for 3 sellers + strict template match."""
     products = [e.product for e in entries]
     sellers = [e.seller for e in entries]
     budgets = [e.waiting.budget for e in entries]
@@ -312,6 +335,7 @@ def _fitness_score(
     return score
 
 
+# --- Stage 0: load waiting pool and apply Layer 1 gatekeeper ---
 def _load_eligible_entries(db: Session) -> list[PoolEntry]:
     waiting = db.query(WaitingProduct).all()
     entries: list[PoolEntry] = []
@@ -327,6 +351,7 @@ def _load_eligible_entries(db: Session) -> list[PoolEntry]:
     return entries
 
 
+# --- Layer 2: enumerate valid trios for a template (e.g. Top + Bottom + Accessory) ---
 def _iter_template_combos(entries: list[PoolEntry], categories: list[str]):
     by_cat: dict[str, list[PoolEntry]] = {c: [] for c in categories}
     for e in entries:
@@ -353,6 +378,7 @@ def _iter_wildcard_combos(entries: list[PoolEntry], max_samples: int = 800):
         yield combo
 
 
+# --- Layers 2 + 7: pick the highest-fitness trio (template first, then wildcard) ---
 async def _find_best_trio(
     entries: list[PoolEntry],
     embeddings: dict[int, np.ndarray],
@@ -383,6 +409,7 @@ async def _find_best_trio(
     return best_combo, best_template, best_score
 
 
+# --- Stage 8: Creative Compositor — stitch banner, save image, write ad_groups row ---
 async def generate_combo_ad(trio_ids, trio_budgets, template_name: str = "Jodi"):
     db = SessionLocal()
     try:
@@ -419,21 +446,30 @@ async def generate_combo_ad(trio_ids, trio_budgets, template_name: str = "Jodi")
         combo.paste(images[2], (600, 0))
 
         final_image_url = ""
-        try:
-            img_bytes = io.BytesIO()
-            combo.save(img_bytes, format='JPEG')
-            img_bytes.seek(0)
-            upload_result = cloudinary.uploader.upload(img_bytes, folder="meesho-ads")
-            final_image_url = upload_result['secure_url']
-            await broadcast_log("[Creative Compositor] Ad image uploaded to Cloudinary.")
-        except Exception as e:
-            print(f"Cloudinary upload failed: {e}")
+        img_bytes = io.BytesIO()
+        combo.save(img_bytes, format='JPEG')
+        img_bytes.seek(0)
+
+        if LOCAL_DEMO:
             ad_id = f"combo-ad-{random.randint(1000, 9999)}"
             file_path = f"static/{ad_id}.jpg"
             os.makedirs("static", exist_ok=True)
             combo.save(file_path)
             final_image_url = f"/static/{ad_id}.jpg"
-            await broadcast_log("[Creative Compositor] Ad image saved locally.")
+            await broadcast_log("[Creative Compositor] Ad image saved locally (local demo).")
+        else:
+            try:
+                upload_result = cloudinary.uploader.upload(img_bytes, folder="meesho-ads")
+                final_image_url = upload_result['secure_url']
+                await broadcast_log("[Creative Compositor] Ad image uploaded to Cloudinary.")
+            except Exception as e:
+                print(f"Cloudinary upload failed: {e}")
+                ad_id = f"combo-ad-{random.randint(1000, 9999)}"
+                file_path = f"static/{ad_id}.jpg"
+                os.makedirs("static", exist_ok=True)
+                combo.save(file_path)
+                final_image_url = f"/static/{ad_id}.jpg"
+                await broadcast_log("[Creative Compositor] Ad image saved locally.")
 
         ad_group = AdGroup(
             status=AdStatus.matchmade,
@@ -461,8 +497,17 @@ async def generate_combo_ad(trio_ids, trio_budgets, template_name: str = "Jodi")
         db.close()
 
 
+# --- Main orchestrator: repeat matchmake loop until count trios formed or pool exhausted ---
 async def matchmake_optimized_trios(count: int = 10) -> int:
-    """7-Layer AI optimization: template match → fitness scoring → combo creation."""
+    """
+    Full pipeline per trio:
+      1. Load eligible pool (Layer 1)
+      2. Embed products (Layer 3)
+      3. Score all template combos (Layer 2) + fitness (Layers 3–6)
+      4. Wildcard if needed (Layer 7)
+      5. Remove trio from waiting_products
+      6. Generate combo ad (Stage 8) → status matchmade
+    """
     db = SessionLocal()
     created = 0
     try:
@@ -477,15 +522,16 @@ async def matchmake_optimized_trios(count: int = 10) -> int:
         _embedding_cache.clear()
 
         for i in range(count):
+            # Re-load pool each iteration (previous trio removed products)
             eligible = _load_eligible_entries(db)
             if len(eligible) < 3:
                 await broadcast_log(f"[Matchmaker] Stopped at {created} trios — pool exhausted.")
                 break
 
             products = [e.product for e in eligible]
-            embeddings = await _embed_products(products)
+            embeddings = await _embed_products(products)  # Layer 3
 
-            best_combo, template_name, fitness = await _find_best_trio(eligible, embeddings)
+            best_combo, template_name, fitness = await _find_best_trio(eligible, embeddings)  # Layers 2, 3–7
             if not best_combo:
                 await broadcast_log("[Matchmaker] Could not form a valid trio.")
                 break
@@ -499,12 +545,13 @@ async def matchmake_optimized_trios(count: int = 10) -> int:
                 f"budget {FITNESS_WEIGHTS['budget']:.0%}, CTR {FITNESS_WEIGHTS['ctr']:.0%})"
             )
 
+            # Remove matched products from waiting pool before creating the ad
             db.query(WaitingProduct).filter(
                 WaitingProduct.product_id.in_(trio_ids)
             ).delete(synchronize_session=False)
             db.commit()
 
-            ad_id = await generate_combo_ad(trio_ids, trio_budgets, template_name or "Jodi")
+            ad_id = await generate_combo_ad(trio_ids, trio_budgets, template_name or "Jodi")  # Stage 8
             if ad_id:
                 created += 1
                 await broadcast_log(f"[Matchmaker] Optimized trio {i + 1}/{count} formed (Ad #{ad_id})")
@@ -525,8 +572,8 @@ async def matchmake_random_trios(count: int = 10) -> int:
     return await matchmake_optimized_trios(count=count)
 
 
+# --- Trigger: auto-matchmake 1 trio when pool join pushes count ≥ 3 (production only) ---
 async def check_waiting_pool():
-    """Auto-matchmake when pool has enough eligible products (triggered after pool join)."""
     db = SessionLocal()
     try:
         eligible = _load_eligible_entries(db)
