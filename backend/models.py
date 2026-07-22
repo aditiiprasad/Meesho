@@ -1,6 +1,22 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import declarative_base
 from pydantic import BaseModel
+from typing import Optional
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+
+# PostgreSQL (Neon) uses native enum columns; SQLite uses string storage.
+_USE_NATIVE_ENUM = "postgres" in os.getenv("DATABASE_URL", "sqlite").lower()
+
+def _ad_enum(enum_cls, **kwargs):
+    return Enum(
+        enum_cls,
+        values_callable=lambda obj: [e.value for e in obj],
+        native_enum=_USE_NATIVE_ENUM,
+        **kwargs,
+    )
 
 Base = declarative_base()
 
@@ -79,8 +95,8 @@ class AdType(str, enum.Enum):
 class AdGroup(Base):
     __tablename__ = "ad_groups"
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(Enum(AdStatus, values_callable=lambda obj: [e.value for e in obj], native_enum=False), default=AdStatus.bidding, index=True)
-    ad_type = Column(Enum(AdType, values_callable=lambda obj: [e.value for e in obj], native_enum=False), index=True)
+    status = Column(_ad_enum(AdStatus), default=AdStatus.bidding, index=True)
+    ad_type = Column(_ad_enum(AdType), index=True)
     
     # If individual
     big_seller_id = Column(Integer, ForeignKey("big_sellers.id"), nullable=True)
@@ -121,4 +137,4 @@ class PoolJoinRequest(BaseModel):
 
 class AdClickRequest(BaseModel):
     ad_id: int
-    product_id: int | None = None
+    product_id: Optional[int] = None

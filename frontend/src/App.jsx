@@ -5,7 +5,7 @@ import SellerRegister from './pages/SellerRegister';
 import CustomerRegister from './pages/CustomerRegister';
 import SellerDashboard from './pages/SellerDashboard';
 import CustomerFeed from './pages/CustomerFeed';
-import SystemStateMonitor from './components/SystemStateMonitor';
+import DemoConsole from './components/DemoConsole';
 
 function Home() {
     return (
@@ -68,7 +68,7 @@ function Home() {
 function App() {
     return (
         <Router>
-            <SystemStateMonitor />
+            <DemoConsole />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/seller-login" element={<SellerLogin />} />

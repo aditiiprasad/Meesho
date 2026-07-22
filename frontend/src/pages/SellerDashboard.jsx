@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
-import { Store, Plus, Package, LogOut, X, Image as ImageIcon, TrendingUp, Zap, CheckCircle2, XCircle, Loader2, ArrowLeft, Gavel, Shuffle } from 'lucide-react';
+import { Store, Plus, Package, LogOut, X, Image as ImageIcon, TrendingUp, Zap, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function SellerDashboard() {
  const navigate = useNavigate();
@@ -21,20 +21,7 @@ export default function SellerDashboard() {
  const [adPoolBudget, setAdPoolBudget] = useState(50);
  const [adPoolProductId, setAdPoolProductId] = useState('');
  const [isDeploying, setIsDeploying] = useState(false);
- const [isMatchmaking, setIsMatchmaking] = useState(false);
- const [isRunningBidding, setIsRunningBidding] = useState(false);
- const [workflowStep, setWorkflowStep] = useState('idle');
- const [poolStatus, setPoolStatus] = useState({ waiting_pool: [], matchmade_ads: [], bidding_ads: [], queued_ads: [], active_ads: [] });
- const [pipeline, setPipeline] = useState([]);
  const [metrics, setMetrics] = useState({ active: false, reach: 0, clicks: 0, pooling_count: 0 });
-
- const STAGE_LABELS = {
-  waiting: { label: 'Waiting to Pool', color: 'bg-gray-200 text-gray-800' },
-  matchmade: { label: 'Matchmade', color: 'bg-purple-200 text-purple-900' },
-  bidding: { label: 'In Bidding', color: 'bg-orange-200 text-orange-900' },
-  queued: { label: 'In Queue', color: 'bg-yellow-200 text-yellow-900' },
-  active: { label: 'Active Ad', color: 'bg-emerald-200 text-emerald-900' },
- };
 
  const [adPoolState, setAdPoolState] = useState('initial');
  const [sellerDetails, setSellerDetails] = useState(null);
@@ -74,32 +61,9 @@ export default function SellerDashboard() {
   .catch(err => console.error("Metrics error:", err));
  };
 
- const fetchPoolStatus = () => {
-  fetch(`${API_URL}/api/pool/status`)
-  .then(res => res.json())
-  .then(data => {
-   setPoolStatus(data);
-   if (data.workflow_phase === 'lifecycle_active') setWorkflowStep('bidding_done');
-   else if (data.workflow_phase === 'ready_to_bid') setWorkflowStep('matchmade');
-   else if (data.workflow_phase === 'ready_to_matchmake') setWorkflowStep('pooled');
-  })
-  .catch(err => console.error("Pool status error:", err));
- };
-
- const fetchPipeline = () => {
-  if (!parsedUser?.id) return;
-  fetch(`${API_URL}/api/seller/pipeline?seller_id=${parsedUser.id}`)
-  .then(res => res.json())
-  .then(data => setPipeline(data.submitted_products || []))
-  .catch(err => console.error("Pipeline error:", err));
- };
- 
  fetchMetrics();
- fetchPoolStatus();
- fetchPipeline();
- const interval = setInterval(() => { fetchMetrics(); fetchPoolStatus(); }, 5000);
- const pipelineInterval = setInterval(fetchPipeline, 15000);
- return () => { clearInterval(interval); clearInterval(pipelineInterval); };
+ const interval = setInterval(fetchMetrics, 5000);
+ return () => clearInterval(interval);
  }, [navigate, user?.id]);
 
  const handleLogout = () => {
@@ -235,12 +199,8 @@ export default function SellerDashboard() {
   }),
   });
   if (response.ok) {
-  const data = await response.json();
-  setWorkflowStep('pooled');
   setAdPoolState('pooled_done');
-  fetch(`${API_URL}/api/pool/status`).then(r => r.json()).then(setPoolStatus);
-  fetch(`${API_URL}/api/seller/pipeline?seller_id=${user.id}`).then(r => r.json()).then(d => setPipeline(d.submitted_products || []));
-  alert(`Added to pool! ${data.seeded_count || 0} products seeded into Waiting Pool.`);
+  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`).then(r => r.json()).then(setMetrics);
   } else {
   const errorData = await response.json().catch(() => ({}));
   alert(`Failed to join pool: ${errorData.detail || 'Unknown error'}`);
@@ -250,49 +210,6 @@ export default function SellerDashboard() {
   alert("Error joining Ad Ne Bana Di Jodi");
  } finally {
   setIsDeploying(false);
- }
- };
-
- const handleMatchmake = async () => {
- setIsMatchmaking(true);
- try {
-  const response = await fetch(`${API_URL}/api/pool/matchmake`, { method: 'POST' });
-  const data = await response.json();
-  if (response.ok) {
-  setWorkflowStep('matchmade');
-  fetch(`${API_URL}/api/pool/status`).then(r => r.json()).then(setPoolStatus);
-  fetch(`${API_URL}/api/seller/pipeline?seller_id=${user.id}`).then(r => r.json()).then(d => setPipeline(d.submitted_products || []));
-  alert(`Matchmade ${data.trios_created} trios!`);
-  } else {
-  alert(`Matchmake failed: ${data.detail || 'Unknown error'}`);
-  }
- } catch (err) {
-  console.error(err);
-  alert("Error running matchmaker");
- } finally {
-  setIsMatchmaking(false);
- }
- };
-
- const handleRunBidding = async () => {
- setIsRunningBidding(true);
- try {
-  const response = await fetch(`${API_URL}/api/pool/bidding`, { method: 'POST' });
-  const data = await response.json();
-  if (response.ok) {
-  setWorkflowStep('bidding_done');
-  fetch(`${API_URL}/api/pool/status`).then(r => r.json()).then(setPoolStatus);
-  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`).then(r => r.json()).then(setMetrics);
-  fetch(`${API_URL}/api/seller/pipeline?seller_id=${user.id}`).then(r => r.json()).then(d => setPipeline(d.submitted_products || []));
-  alert(`Bidding complete! ${data.winners} winners in queue, ${data.active_count} active ads.`);
-  } else {
-  alert(`Bidding failed: ${data.detail || 'Unknown error'}`);
-  }
- } catch (err) {
-  console.error(err);
-  alert("Error running bidding");
- } finally {
-  setIsRunningBidding(false);
  }
  };
 
@@ -308,8 +225,6 @@ export default function SellerDashboard() {
    if (res.ok) {
     alert("Product removed from Ad Ne Bana Di Jodi.");
     fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`).then(r => r.json()).then(setMetrics);
-    fetch(`${API_URL}/api/seller/pipeline?seller_id=${user.id}`).then(r => r.json()).then(d => setPipeline(d.submitted_products || []));
-    fetch(`${API_URL}/api/pool/status`).then(r => r.json()).then(setPoolStatus);
    } else {
     const err = await res.json();
     alert(`Failed to remove: ${err.detail}`);
@@ -527,36 +442,21 @@ export default function SellerDashboard() {
       </div>
      )}
 
-     {/* Sequential workflow buttons — only after previous step completes */}
-     {workflowStep === 'pooled' && (
-      <div className="mt-6">
+     {adPoolState === 'pooled_done' && (
+      <div className="bg-white p-8 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center animate-fade-in-up">
+       <div className="w-16 h-16 bg-emerald-100 border-[2px] border-black rounded-xl flex items-center justify-center mx-auto mb-4">
+        <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+       </div>
+       <h3 className="text-2xl font-black text-[#410F29] mb-2 uppercase tracking-tight">You're in the pool!</h3>
+       <p className="text-gray-700 font-bold mb-6 max-w-md mx-auto">
+        Your product has been submitted. We'll notify you when your combo ad goes live — check back here for campaign performance.
+       </p>
        <button
-        onClick={handleMatchmake}
-        disabled={isMatchmaking || (poolStatus.waiting_pool?.length || 0) < 3}
-        className="w-full flex justify-center items-center px-4 py-3.5 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 text-lg font-black uppercase tracking-wider text-white bg-[#F47216] transition-all disabled:opacity-50"
+        onClick={() => { setIsAdPoolOpen(false); setAdPoolState('initial'); }}
+        className="px-8 py-3 bg-[#095955] text-white font-black uppercase tracking-wider rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
        >
-        <Shuffle className="h-5 w-5 mr-2"/>
-        {isMatchmaking ? 'Matchmaking...' : 'Run Matchmaking (10 Trios)'}
+        Done
        </button>
-      </div>
-     )}
-
-     {workflowStep === 'matchmade' && (
-      <div className="mt-6">
-       <button
-        onClick={handleRunBidding}
-        disabled={isRunningBidding || (poolStatus.matchmade_ads?.length || 0) === 0}
-        className="w-full flex justify-center items-center px-4 py-3.5 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 text-lg font-black uppercase tracking-wider text-white bg-[#410F29] transition-all disabled:opacity-50"
-       >
-        <Gavel className="h-5 w-5 mr-2"/>
-        {isRunningBidding ? 'Running Bidding...' : 'Run Bidding'}
-       </button>
-      </div>
-     )}
-
-     {workflowStep === 'bidding_done' && (
-      <div className="mt-6 p-4 bg-green-50 text-green-800 rounded-xl border-2 border-green-500 font-bold text-center flex items-center justify-center">
-       <CheckCircle2 className="h-5 w-5 mr-2"/> Bidding complete — ads are in queue/active lifecycle
       </div>
      )}
 
@@ -564,38 +464,12 @@ export default function SellerDashboard() {
     </div>
    )}
 
-   {/* Seller Pipeline — submitted products and their stage */}
-   {pipeline.length > 0 && (
-    <div className="p-8 bg-white border-t-[4px] border-black">
-     <h3 className="text-2xl font-black tracking-tighter uppercase text-[#410F29] mb-4">Your Pooling Pipeline</h3>
-     <p className="text-sm text-gray-600 font-bold mb-6">Track where each submitted product is in the ad pipeline.</p>
-     <div className="space-y-3">
-      {pipeline.map(item => {
-       const stage = STAGE_LABELS[item.stage] || { label: item.stage, color: 'bg-gray-100' };
-       return (
-        <div key={item.product_id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border-[2px] border-black">
-         {item.image_url && (
-          <img src={item.image_url.startsWith('/') ? `${API_URL}${item.image_url}` : item.image_url} alt="" className="w-14 h-14 object-cover rounded-lg border-2 border-black" />
-         )}
-         <div className="flex-1 min-w-0">
-          <div className="font-black text-[#410F29] truncate">{item.title}</div>
-          <div className="text-sm text-gray-600">Budget: ₹{item.budget?.toFixed(2) || '—'} {item.ad_id && `· Ad #${item.ad_id}`}</div>
-         </div>
-         <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase border-2 border-black ${stage.color}`}>
-          {stage.label}
-         </span>
-         {(item.stage === 'waiting' || item.stage === 'active') && (
-          <button
-           onClick={() => handleRemoveFromPool(item.product_id)}
-           className="px-3 py-1.5 bg-red-100 text-red-600 text-xs font-black uppercase rounded-lg border-2 border-red-500 hover:bg-red-200"
-          >
-           Remove
-          </button>
-         )}
-        </div>
-       );
-      })}
-     </div>
+   {(metrics.pooling_count ?? 0) > 0 && !metrics.active && (
+    <div className="p-6 md:p-8 bg-[#095955]/5 border-t-[4px] border-[#095955] text-center">
+     <p className="font-black text-[#410F29] uppercase tracking-tight">Campaign submitted</p>
+     <p className="text-sm text-gray-700 font-bold mt-2 max-w-md mx-auto">
+      We're setting up your combo ad. Performance stats will show here once it goes live.
+     </p>
     </div>
    )}
 

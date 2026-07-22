@@ -1,13 +1,14 @@
 import os
 import random
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import create_engine, text, or_
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 from models import Base, Product, Seller, Customer
 
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mock_v4.db")
 if DATABASE_URL.startswith("postgres://"):
@@ -143,7 +144,7 @@ def get_all_pooled_product_ids(db) -> set[int]:
     return ids
 
 
-def seed_waiting_pool(db, exclude_product_ids: set | None = None, target_count: int = 30):
+def seed_waiting_pool(db, exclude_product_ids: Optional[set] = None, target_count: int = 30):
     from models import WaitingProduct
 
     exclude_product_ids = exclude_product_ids or set()
@@ -290,5 +291,14 @@ def seed_data():
                 ad.started_at = None
         db.commit()
         print("Demo fix: demoted blocking enterprise ads from active to queued.")
+
+    # Pre-seed waiting pool for instant demo matchmaking when pipeline is empty
+    pipeline_count = db.query(AdGroup).filter(
+        AdGroup.status.in_([AdStatus.matchmade, AdStatus.bidding, AdStatus.queued, AdStatus.active])
+    ).count()
+    if db.query(WaitingProduct).count() < 15 and pipeline_count == 0:
+        seeded = seed_waiting_pool(db, target_count=30)
+        if seeded:
+            print(f"Demo ready: seeded {seeded} products into waiting pool.")
 
     db.close()

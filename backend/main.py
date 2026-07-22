@@ -1,6 +1,7 @@
 import os
+from typing import Optional
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 import cloudinary
 cloudinary.config()
@@ -29,7 +30,7 @@ from models import (
     AdGroup, AdStatus, AdType, WaitingProduct, BigSeller, BigSellerProduct,
 )
 from matchmaker import (
-    broadcast_log, matchmake_random_trios,
+    broadcast_log, matchmake_optimized_trios, check_waiting_pool,
     redis_hset, redis_hsetnx, redis_hincrby, redis_hget, redis_hexists, log_event_stream,
 )
 
@@ -39,7 +40,7 @@ AD_RUNTIME_HOURS = 1
 CLICK_COST = 2.0
 
 
-def return_pooled_products_to_waiting(db, ad: AdGroup, exclude_product_ids: set | None = None):
+def return_pooled_products_to_waiting(db, ad: AdGroup, exclude_product_ids: Optional[set] = None):
     """Return pooled ad products to waiting pool with proportional remaining budget."""
     exclude_product_ids = exclude_product_ids or set()
     per_product_budget = ad.total_budget / 3.0 if ad.total_budget > 0 else 0
@@ -438,6 +439,8 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
     waiting_count = db.query(WaitingProduct).count()
     matchmade_count = db.query(AdGroup).filter(AdGroup.status == AdStatus.matchmade).count()
 
+    asyncio.create_task(check_waiting_pool())
+
     return {
         "message": "Successfully joined Ad-Pool",
         "data": req.model_dump(),
@@ -458,11 +461,11 @@ async def pool_matchmake(db: Session = Depends(get_db)):
         if waiting_count < 3:
             raise HTTPException(status_code=400, detail="Not enough products in waiting pool for matchmaking.")
 
-    created = await matchmake_random_trios(count=10)
+    created = await matchmake_optimized_trios(count=10)
     matchmade_count = db.query(AdGroup).filter(AdGroup.status == AdStatus.matchmade).count()
 
     return {
-        "message": f"Matchmade {created} trios",
+        "message": f"AI matchmade {created} optimized trios",
         "trios_created": created,
         "matchmade_count": matchmade_count,
         "workflow_phase": "ready_to_bid",
