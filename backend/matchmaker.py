@@ -352,6 +352,28 @@ def _load_eligible_entries(db: Session) -> list[PoolEntry]:
     return entries
 
 
+def _template_for_categories(categories: set[str]) -> Optional[str]:
+    """Return template name when categories exactly match a Jodi template (3 distinct slots)."""
+    if len(categories) != 3:
+        return None
+    for template_name, template_cats in TEMPLATES.items():
+        if set(template_cats) == categories:
+            return template_name
+    return None
+
+
+def _is_valid_trio(entries: Tuple[PoolEntry, ...]) -> bool:
+    """Every Jodi must use 3 different categories that match one template (e.g. Top + Bottom + Accessory)."""
+    return _template_for_categories({e.product.category for e in entries}) is not None
+
+
+def products_form_valid_trio(products: list) -> bool:
+    """Check product categories form a valid template (for API responses)."""
+    if len(products) < 3:
+        return False
+    return _template_for_categories({p.category for p in products}) is not None
+
+
 # --- Layer 2: enumerate valid trios for a template (e.g. Top + Bottom + Accessory) ---
 def _iter_template_combos(entries: list[PoolEntry], categories: list[str]):
     by_cat: dict[str, list[PoolEntry]] = {c: [] for c in categories}
@@ -368,25 +390,57 @@ def _iter_template_combos(entries: list[PoolEntry], categories: list[str]):
 
 
 def _iter_wildcard_combos(entries: list[PoolEntry], max_samples: int = 800):
-    """Layer 7: wildcard fallback — sample candidate trios from the pool."""
+    """Layer 7: wildcard fallback — only trios with 3 distinct template categories."""
     if len(entries) < 3:
         return
-    all_combos = list(itertools.combinations(entries, 3))
-    if len(all_combos) <= max_samples:
-        yield from all_combos
+    valid = [
+        combo for combo in itertools.combinations(entries, 3)
+        if _is_valid_trio(combo)
+    ]
+    if not valid:
         return
-    for combo in random.sample(all_combos, max_samples):
+    if len(valid) <= max_samples:
+        yield from valid
+        return
+    for combo in random.sample(valid, max_samples):
         yield combo
+
+
+def _find_loose_fallback(
+    entries: list[PoolEntry],
+    embeddings: dict[int, np.ndarray],
+    max_samples: int = 800,
+) -> Tuple[Optional[Tuple[PoolEntry, PoolEntry, PoolEntry]], float]:
+    """Last resort — any 3 distinct products when no cross-category template trio exists."""
+    if len(entries) < 3:
+        return None, -1.0
+    candidates = [
+        combo for combo in itertools.combinations(entries, 3)
+        if len({e.product.id for e in combo}) == 3
+    ]
+    if not candidates:
+        return None, -1.0
+    if len(candidates) > max_samples:
+        candidates = random.sample(candidates, max_samples)
+    best_combo = None
+    best_score = -1.0
+    for combo in candidates:
+        score = _fitness_score(combo, embeddings, None)
+        if score > best_score:
+            best_score = score
+            best_combo = combo
+    return best_combo, best_score
 
 
 # --- Layers 2 + 7: pick the highest-fitness trio (template first, then wildcard) ---
 async def _find_best_trio(
     entries: list[PoolEntry],
     embeddings: dict[int, np.ndarray],
-) -> Tuple[Optional[Tuple[PoolEntry, PoolEntry, PoolEntry]], Optional[str], float]:
+) -> Tuple[Optional[Tuple[PoolEntry, PoolEntry, PoolEntry]], Optional[str], float, bool]:
     best_combo = None
     best_template = None
     best_score = -1.0
+    is_valid = True
 
     # Layer 2: strict template matching first
     for template_name, categories in TEMPLATES.items():
@@ -397,17 +451,29 @@ async def _find_best_trio(
                 best_combo = combo
                 best_template = template_name
 
-    # Layer 7: wildcard if no template trio found
+    # Layer 7: wildcard if no template trio found (still requires 3 distinct categories)
     if best_combo is None:
-        await broadcast_log("[Layer 7] Wildcard fallback — no strict template trio available.")
+        await broadcast_log("[Layer 7] Wildcard fallback — searching for cross-category trio.")
         for combo in _iter_wildcard_combos(entries):
-            score = _fitness_score(combo, embeddings, None)
+            template_name = _template_for_categories({e.product.category for e in combo})
+            score = _fitness_score(combo, embeddings, template_name)
             if score > best_score:
                 best_score = score
                 best_combo = combo
-                best_template = "Wildcard Jodi"
+                best_template = template_name
 
-    return best_combo, best_template, best_score
+    # Still nothing — form best available trio and flag as invalid
+    if best_combo is None:
+        await broadcast_log(
+            "[Matchmaker] No valid cross-category trio — forming fallback combo "
+            "(need Top + Bottom + Accessory, or another full template set in pool)."
+        )
+        best_combo, best_score = _find_loose_fallback(entries, embeddings)
+        if best_combo:
+            best_template = "No Valid Trio"
+            is_valid = False
+
+    return best_combo, best_template, best_score, is_valid
 
 
 # --- Stage 8: Creative Compositor — stitch banner, save image, write ad_groups row ---
@@ -499,7 +565,7 @@ async def generate_combo_ad(trio_ids, trio_budgets, template_name: str = "Jodi")
 
 
 # --- Main orchestrator: repeat matchmake loop until count trios formed or pool exhausted ---
-async def matchmake_optimized_trios(count: int = 10) -> int:
+async def matchmake_optimized_trios(count: int = 10) -> Tuple[int, int]:
     """
     Full pipeline per trio:
       1. Load eligible pool (Layer 1)
@@ -508,14 +574,17 @@ async def matchmake_optimized_trios(count: int = 10) -> int:
       4. Wildcard if needed (Layer 7)
       5. Remove trio from waiting_products
       6. Generate combo ad (Stage 8) → status matchmade
+
+    Returns (created_count, invalid_trio_count).
     """
     db = SessionLocal()
     created = 0
+    invalid_trios = 0
     try:
         eligible = _load_eligible_entries(db)
         if len(eligible) < 3:
             await broadcast_log("[Matchmaker] Not enough eligible products in waiting pool (need 3+).")
-            return 0
+            return 0, 0
 
         await broadcast_log(
             f"[Jodi Maker] Running 7-Layer Optimization on {len(eligible)} eligible products..."
@@ -523,7 +592,6 @@ async def matchmake_optimized_trios(count: int = 10) -> int:
         _embedding_cache.clear()
 
         for i in range(count):
-            # Re-load pool each iteration (previous trio removed products)
             eligible = _load_eligible_entries(db)
             if len(eligible) < 3:
                 await broadcast_log(f"[Matchmaker] Stopped at {created} trios — pool exhausted.")
@@ -532,43 +600,51 @@ async def matchmake_optimized_trios(count: int = 10) -> int:
             products = [e.product for e in eligible]
             embeddings = await _embed_products(products)  # Layer 3
 
-            best_combo, template_name, fitness = await _find_best_trio(eligible, embeddings)  # Layers 2, 3–7
+            best_combo, template_name, fitness, is_valid = await _find_best_trio(eligible, embeddings)
             if not best_combo:
-                await broadcast_log("[Matchmaker] Could not form a valid trio.")
+                await broadcast_log("[Matchmaker] Could not form any trio — pool exhausted.")
                 break
 
             trio_ids = [e.product.id for e in best_combo]
             trio_budgets = [e.waiting.budget for e in best_combo]
 
-            await broadcast_log(
-                f"[Layer 2] Template: {template_name} | Fitness: {fitness:.3f} "
-                f"(semantic {FITNESS_WEIGHTS['semantic']:.0%}, audience {FITNESS_WEIGHTS['audience']:.0%}, "
-                f"budget {FITNESS_WEIGHTS['budget']:.0%}, CTR {FITNESS_WEIGHTS['ctr']:.0%})"
-            )
+            if is_valid:
+                await broadcast_log(
+                    f"[Layer 2] Template: {template_name} | Fitness: {fitness:.3f} "
+                    f"(semantic {FITNESS_WEIGHTS['semantic']:.0%}, audience {FITNESS_WEIGHTS['audience']:.0%}, "
+                    f"budget {FITNESS_WEIGHTS['budget']:.0%}, CTR {FITNESS_WEIGHTS['ctr']:.0%})"
+                )
+            else:
+                cats = ", ".join(e.product.category for e in best_combo)
+                await broadcast_log(
+                    f"[Matchmaker] No valid trio — fallback combo formed ({cats}). "
+                    f"Add Top + Bottom + Accessory to pool for a proper Jodi."
+                )
 
-            # Remove matched products from waiting pool before creating the ad
             db.query(WaitingProduct).filter(
                 WaitingProduct.product_id.in_(trio_ids)
             ).delete(synchronize_session=False)
             db.commit()
 
-            ad_id = await generate_combo_ad(trio_ids, trio_budgets, template_name or "Jodi")  # Stage 8
+            ad_id = await generate_combo_ad(trio_ids, trio_budgets, template_name or "Jodi")
             if ad_id:
                 created += 1
+                if not is_valid:
+                    invalid_trios += 1
                 await broadcast_log(f"[Matchmaker] Optimized trio {i + 1}/{count} formed (Ad #{ad_id})")
 
         await broadcast_log(f"[Jodi Maker] Done — {created} AI-optimized trios matchmade.")
-        return created
+        return created, invalid_trios
 
     except Exception as e:
         print(f"Error in matchmake_optimized_trios: {e}")
         await broadcast_log(f"[Matchmaker] Error: {e}")
-        return created
+        return created, invalid_trios
     finally:
         db.close()
 
 
-async def matchmake_random_trios(count: int = 10) -> int:
+async def matchmake_random_trios(count: int = 10) -> Tuple[int, int]:
     """Legacy alias — delegates to the 7-layer optimizer."""
     return await matchmake_optimized_trios(count=count)
 

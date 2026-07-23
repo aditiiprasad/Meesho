@@ -8,20 +8,171 @@
 |---|-----|
 | **App (submit this link)** | https://meesho-beige-three.vercel.app |
 | Backend API | https://meesho-backend-wgsi.onrender.com |
+| Repository | https://github.com/aditiiprasad/Meesho |
 
-**Judge flow:** Open the app → click **How to Test Demo** (blinking button) → **Guest Seller** → join pool → **Demo Console** (bottom-right) → matchmake → bid → **Guest Customer** → click ad → back to seller metrics.
+**Quick judge flow:** Landing → **How to Test Demo** → **Guest Seller** → join pool → **Demo Console** (bottom-right) → matchmake → bid → **Guest Customer** → click ad → back to seller **Active Campaigns**.
 
-**Guest accounts:** `seller1@test.com` / `password` · `customer@example.com` / `password` (or use Guest buttons).
+**Guest accounts:** `seller1@test.com` / `password` · `customer@example.com` / `password` (or use **Guest** buttons on login pages).
 
 ---
 
-A hackathon prototype that lets Tier-2/3 micro-sellers **pool micro-budgets (₹50–150)** into AI-matched **combo ads ("Jodis")**, compete with enterprise brands for premium feed slots, and track campaign performance — without fighting the CPC bidding war alone.
+## Page-by-page overview
+
+Screenshots live in the [`demo/`](demo/) folder at the repo root. Add PNG/JPG files using the names below — the README will display them automatically once uploaded.
+
+Every main screen also has **How to Use** and **What Is Happening** buttons at the top (same as the landing page) for in-app judge guidance.
+
+---
+
+### 1. Landing page
+
+![Landing page — login and demo guide buttons](demo/01-landing-page.png)
+
+| | |
+|---|---|
+| **Route** | `/` |
+| **Purpose** | Entry point — choose Seller or Customer role |
+
+**How to use (from in-app guide):**
+- Start here before testing.
+- Open **How to Test Demo** for the full walkthrough.
+- Open **What Actually Happens** for system rules and pipeline.
+- Use **Login as Seller** or **Login as Customer** (or register).
+
+**What happens:**
+- No backend logic on this page — routing only.
+- Links to GitHub profile, **Repository**, and LinkedIn in the header.
+
+---
+
+### 2. Seller login
+
+![Seller login — guest access](demo/02-seller-login.png)
+
+| | |
+|---|---|
+| **Route** | `/seller-login` |
+| **Purpose** | Authenticate as a micro-seller |
+
+**How to use:**
+- Click **Login as Guest Seller** (fastest for judges).
+- Or sign in with `seller1@test.com` / `password`.
+
+**What happens:**
+- Validates credentials against Postgres (production) or SQLite (local demo).
+- Redirects to **Seller Dashboard** on success.
+
+---
+
+### 3. Seller dashboard
+
+![Seller dashboard — join pool and pipeline](demo/03-seller-dashboard.png)
+
+| | |
+|---|---|
+| **Route** | `/seller-dashboard` |
+| **Purpose** | Pool products, track pipeline, view live campaign metrics |
+
+**How to use:**
+1. Open **Ad Ne Bana Di Jodi** → pick a product, set budget **₹50–₹150** → **Decide to Pool**.
+2. Scroll to **Your Ad Pipeline** — stage should show **Waiting to Pool**.
+3. Max **3 products** in the pipeline per seller at once.
+4. **Withdraw** anytime to free a slot (works at every stage).
+
+**What happens (Step 1 — Join pool):**
+- Eligibility check: product rating ≥ 4.0, return rate &lt; 10%, seller monthly ad spend &lt; ₹150.
+- Product enters the **Waiting Pool** with your budget.
+- Pool is auto-seeded with ~15–30 catalog products so trios can form even with one real seller.
+
+![Seller pipeline and active campaigns](demo/04-seller-pipeline-active.png)
+
+**How to use (metrics phase):**
+- After bidding, if your Jodi is **Live**, see **Active Campaigns** with **Clicks**, **Spend**, and **Sales Generated** per product.
+
+**What happens (live metrics):**
+- Clicks tracked **per product** in Redis (₹2 per click).
+- Spend = clicks × ₹2; Sales = demo formula (clicks × 0.12 × ₹80).
+- Pipeline stages: **Waiting** → **Matchmade** → **In Auction** → **In Queue** → **Live**.
+
+---
+
+### 4. Demo Console (presenter controls)
+
+![Demo Console — matchmaking and bidding](demo/05-demo-console.png)
+
+| | |
+|---|---|
+| **Location** | Floating button, bottom-right (all pages) |
+| **Purpose** | Run matchmaking & bidding; view live pipeline buckets |
+
+**How to use:**
+1. Click the blinking **Demo Console** button.
+2. **Run Matchmaking** → seller pipeline moves to **Matchmade**.
+3. **Run Bidding** → **In Queue** or **Live** on customer feed.
+4. Watch **Live Pipeline** tabs: Waiting · Matchmade · Bidding · Queue · Active.
+
+**What happens:**
+- **Run Matchmaking** → 7-Layer Jodi Maker groups 3 products into a 900×300 combo banner (`status = matchmade`).
+- **Run Bidding** → pooled Jodis vs 5 simulated enterprise ads; top **3 bids** win → queue → up to **3 active** feed slots.
+- Losers return to waiting pool with budget split proportionally.
+- Matchmaking & bidding are **manual** in the demo for a clear presenter narrative (production can auto-run).
+
+---
+
+### 5. Customer login
+
+![Customer login — guest access](demo/06-customer-login.png)
+
+| | |
+|---|---|
+| **Route** | `/customer-login` |
+| **Purpose** | Browse feed as a shopper |
+
+**How to use:**
+- Log out from seller (top-right) → home → **Login as Customer** → **Login as Guest Customer**.
+
+**What happens:**
+- Same auth pattern as seller; redirects to **Customer Feed**.
+
+---
+
+### 6. Customer feed
+
+![Customer feed — sponsored combo ads](demo/07-customer-feed.png)
+
+| | |
+|---|---|
+| **Route** | `/customer-feed` |
+| **Purpose** | Product discovery + sponsored Jodi combo ads |
+
+**How to use:**
+1. Find the **Sponsored Combo** banner (interleaved in the feed).
+2. Click a **product zone** in the ad — click is attributed to that seller’s product.
+3. Valid Jodis show *“A perfect match curated for you.”*
+4. If the pool lacked cross-category products, a **No valid trio** warning appears (fallback combo still shown).
+
+**What happens (Steps 6–8):**
+- Max **3 ads live** on feed; runtime **1 hour** (background orchestrator every 30s).
+- Each click debits **₹2** from the shared Jodi budget.
+- Budget exhausted or ad expired → ad removed → next queued ad promotes → products can re-enter pool.
+
+---
+
+### In-app guide modals (optional screenshots)
+
+![How to Test Demo modal](demo/08-how-to-use-modal.png)
+
+**How to Test Demo** — 4-phase judge walkthrough: Seller pool → Demo Console → Customer clicks → Seller metrics.
+
+![What Actually Happens modal](demo/09-what-happens-modal.png)
+
+**What Is Happening** — full system flowchart: pool → 7 layers → matchmade → auction → queue → live → clicks → expire/withdraw loop.
 
 ---
 
 ## Problem
 
-On large e-commerce platforms, premium sponsored slots are won by **highest CPC bids**. Enterprise brands with ₹ lakhs in ad spend dominate page-1 real estate. A micro-seller with ₹100/day gets outbid instantly — quality products stay buried on page 7.
+On large e-commerce platforms, premium sponsored slots are won by **highest CPC bids**. Enterprise brands with ₹ lakhs in ad spend dominate page-1 real estate. A micro-seller with ₹100/day gets outbid instantly — quality products stay buried.
 
 This **Cold Start monopoly** means capital beats quality.
 
@@ -29,13 +180,13 @@ This **Cold Start monopoly** means capital beats quality.
 
 ## Solution
 
-**Ad Ne Bana Di Jodi** (the Meesho Jodi Maker) unionizes micro-budgets:
+**Ad Ne Bana Di Jodi** unionizes micro-budgets:
 
 | Seller A | Seller B | Seller C | **Pooled** |
 |--------|--------|--------|------------|
 | ₹40    | ₹50    | ₹35    | **₹125**   |
 
-Three non-competing, complementary products from independent sellers are grouped into one **900×300 combo banner**. The pooled bid wins slots individual sellers cannot. Clicks are attributed per seller; budget is deducted from the shared ad pool.
+Three **complementary** products from independent sellers (e.g. Top + Bottom + Accessory) are grouped into one **900×300 combo banner**. The pooled bid competes for feed slots individual sellers cannot afford alone. Clicks are attributed **per product**; budget is deducted from the shared ad pool.
 
 ---
 
@@ -43,25 +194,15 @@ Three non-competing, complementary products from independent sellers are grouped
 
 - **Democratizes visibility** — micro-sellers co-buy premium ad space
 - **Quality gate** — only 4.0+ rated products from eligible sellers enter the pool
-- **AI-composed Jodis** — complementary templates (Outfit, Home Decor, Cricket Kit) instead of random bundles
-- **Attribution fairness** — click cost (₹2) debits the active ad budget; seller click counts tracked separately
-- **Presenter-ready demo** — authentic Seller/Customer UI + isolated Demo Console for pipeline orchestration
+- **AI-composed Jodis** — template combos (*Outfit*, *Home Decor*, *Cricket Kit*) with Gemini semantic scoring
+- **Fair attribution** — ₹2/click debits Jodi budget; per-product click counts in Redis
+- **Judge-ready UX** — authentic Seller/Customer UI + Demo Console + in-app guide modals on every page
 
 ---
 
-## Demo Flow
+## Quick start (local)
 
-```
-Home → Guest Seller Login → Join Ad Ne Bana Di Jodi (eligibility + product check)
-     → Demo Console: Run AI Matchmaking → Run Bidding → Open Customer Feed
-```
-
-| Role | Credentials |
-|------|-------------|
-| Seller | `seller1@test.com` / `password` (or **Guest Seller** button) |
-| Customer | `customer@example.com` / `password` (or **Guest Customer** button) |
-
-Quick start (no `.env` needed):
+No `.env` required for local demo:
 
 ```bash
 ./start-demo.sh
@@ -69,71 +210,71 @@ Quick start (no `.env` needed):
 # Frontend → http://127.0.0.1:5173
 ```
 
-Use the **Demo Console** (bottom-right) for matchmaking, bidding, and live pipeline — not the Seller UI.
+`LOCAL_DEMO=1` uses SQLite, skips Neon/Redis/Gemini/Cloudinary, and runs **3 trios** per matchmake click (faster for live demos).
 
 ---
 
-## Folder Structure
+## Folder structure
 
 ```
 Meesho/
 ├── README.md
-├── render.yaml                 # Render.com deployment (backend)
-├── start-demo.sh               # One-command local demo startup
+├── demo/                       # Page screenshots for README (see demo/README.md)
+├── render.yaml                 # Render.com backend deploy
+├── start-demo.sh               # One-command local demo
+├── scripts/
+│   └── verify-deploy.sh        # Health + CORS smoke test
 │
 ├── backend/
-│   ├── main.py                 # FastAPI routes, orchestrator, ad lifecycle
-│   ├── matchmaker.py           # 7-layer AI engine, Redis helpers, compositor
-│   ├── models.py               # SQLAlchemy models + Pydantic schemas
-│   ├── database.py             # DB connection, seeding, migrations
+│   ├── main.py                 # FastAPI routes, lifecycle, metrics
+│   ├── matchmaker.py           # 7-layer engine, compositor, Redis helpers
+│   ├── models.py               # SQLAlchemy + Pydantic
+│   ├── database.py             # Connection, seeding, pool repair
+│   ├── demo_config.py          # LOCAL_DEMO, Gemini toggle, batch sizes
 │   ├── requirements.txt
-│   ├── runtime.txt             # Python 3.11.9
-│   ├── demo_config.py          # LOCAL_DEMO mode (SQLite, no external services)
-│   ├── .env                    # Optional: production DATABASE_URL, Redis, Gemini, Cloudinary
-│   └── static/                 # Fallback combo ad images (local CDN)
+│   └── static/                 # Fallback combo images
 │
 └── frontend/
-    ├── index.html
-    ├── vite.config.js
-    ├── package.json
+    ├── vercel.json             # SPA routing
     └── src/
-        ├── App.jsx             # Router + landing page
-        ├── config.js           # VITE_API_URL
+        ├── App.jsx             # Landing + router
         ├── components/
-        │   └── DemoConsole.jsx # Presenter modal (Orchestrator + Live Pipeline)
+        │   ├── DemoConsole.jsx       # Presenter pipeline controls
+        │   ├── DemoGuideBar.jsx      # How to Use / What Is Happening buttons
+        │   ├── DemoGuideModal.jsx    # Judge walkthrough
+        │   └── DemoRulesModal.jsx    # System flowchart
         └── pages/
-            ├── SellerDashboard.jsx   # Authentic seller product UI
+            ├── SellerDashboard.jsx
             ├── SellerLogin.jsx
-            ├── SellerRegister.jsx
-            ├── CustomerFeed.jsx      # Product feed + sponsored combo ads
-            ├── CustomerLogin.jsx
-            └── CustomerRegister.jsx
+            ├── CustomerFeed.jsx
+            └── CustomerLogin.jsx
 ```
 
 ---
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | React 19, Vite 8, Tailwind CSS 4, React Router 7, Lucide icons |
 | **Backend** | FastAPI, Python 3.11, Uvicorn, Pydantic v2 |
-| **Database** | PostgreSQL (Neon) via SQLAlchemy 2.0 · SQLite fallback for local dev |
-| **Cache / Metrics** | Redis (Upstash) — click counts, pub/sub logs · in-memory fallback |
-| **AI / ML** | Google Gemini (`gemini-embedding-001`), scikit-learn cosine similarity, NumPy |
-| **Media** | Cloudinary (uploads), Pillow (900×300 banner compositing), httpx |
-| **Deploy** | Render (`render.yaml`) |
+| **Database** | PostgreSQL (Neon) · SQLite for local demo |
+| **Cache / Metrics** | Redis (Upstash) — per-product clicks, pub/sub logs · in-memory fallback locally |
+| **AI / ML** | Google Gemini (`gemini-embedding-001`) + lexical fallback · scikit-learn cosine similarity |
+| **Media** | Cloudinary uploads · Pillow 900×300 compositing |
+| **Deploy** | Vercel (frontend) · Render (backend) |
 
 ---
 
 ## Architecture
 
-### High-Level System (HLD)
+### High-level system
 
 ```mermaid
 flowchart TB
     subgraph Clients
-        SL[Seller Dashboard]
+        LP[Landing + Guide Modals]
+        SD[Seller Dashboard]
         CF[Customer Feed]
         DC[Demo Console]
     end
@@ -155,7 +296,8 @@ flowchart TB
         CL[Cloudinary CDN]
     end
 
-    SL --> API
+    LP --> API
+    SD --> API
     CF --> API
     DC --> API
     API --> PG
@@ -168,91 +310,35 @@ flowchart TB
     ORCH --> RD
 ```
 
-### Ad Lifecycle State Machine (LLD)
+### Ad lifecycle
 
 ```mermaid
 stateDiagram-v2
     [*] --> waiting: Seller joins pool
-    waiting --> matchmade: AI Matchmaker forms Jodi
-    matchmade --> bidding: Demo Console → Run Bidding
+    waiting --> matchmade: Run Matchmaking
+    matchmade --> bidding: Run Bidding
     bidding --> queued: Top 3 by bid_amount
     bidding --> waiting: Losers returned to pool
     queued --> active: promote_to_active_ads (max 3 slots)
-    active --> [*]: Budget exhausted / 1hr expiry / manual remove
+    active --> [*]: Budget exhausted / 1hr expiry / withdraw
     active --> queued: Promote next from queue
 ```
 
-### 7-Layer Matchmaker Pipeline (LLD)
-
-```mermaid
-flowchart LR
-    WP[Waiting Pool] --> L1[Layer 1: Gatekeeper]
-    L1 --> L2[Layer 2: Template Match]
-    L2 --> L3[Layer 3: Semantic Harmony 40%]
-    L3 --> GEM[Gemini Embeddings]
-    GEM --> L3
-    L2 --> L4[Layer 4: Audience Affinity 30%]
-    L2 --> L5[Layer 5: Budget Harmonization 20%]
-    L2 --> L6[Layer 6: CTR Boost 10%]
-    L2 --> L7[Layer 7: Wildcard Fallback]
-    L7 --> FIT[Fitness Score]
-    L4 --> FIT
-    L5 --> FIT
-    L6 --> FIT
-    L3 --> FIT
-    FIT --> BEST[Best Trio Selected]
-    BEST --> COMP[Pillow + Cloudinary]
-    COMP --> AG[AdGroup status=matchmade]
-```
+### 7-Layer Jodi Maker
 
 | Layer | Weight | What it does |
 |-------|--------|--------------|
-| 1. Gatekeeper | — | rating ≥ 4.0, return rate < 10%, seller ad spend < ₹150 |
-| 2. Template Match | bonus | Strict Jodis: *The Outfit*, *Home Decor*, *Cricket Kit* |
-| 3. Semantic Harmony | 40% | Gemini embeddings + cosine similarity |
-| 4. Audience Affinity | 30% | Segment, price band, seller GMV overlap |
+| 1. Gatekeeper | — | rating ≥ 4.0, return rate &lt; 10%, seller ad spend &lt; ₹150 |
+| 2. Template Match | bonus | Strict Jodis: *The Outfit* (Top+Bottom+Accessory), *Home Decor*, *Cricket Kit* |
+| 3. Semantic Harmony | 40% | Gemini embeddings (production) or lexical fallback · cosine similarity |
+| 4. Audience Affinity | 30% | Segment, price band, seller GMV alignment |
 | 5. Budget Harmonization | 20% | Low variance across trio budgets |
 | 6. CTR Optimization | 10% | Average rating boost |
-| 7. Wildcard Fallback | — | Best-scoring trio when no template fits |
+| 7. Wildcard | — | Cross-category fallback; if pool lacks a full template, best available combo with **No valid trio** warning |
 
-### Data Model (LLD)
+**Template rule:** Valid Jodis always use **3 different categories** matching one template. Same-category trios (e.g. 3× Bottom) are never shown as a “perfect match.”
 
-```mermaid
-erDiagram
-    Seller ||--o{ Product : owns
-    Seller {
-        int id
-        string name
-        float monthly_ad_spend
-        float monthly_gmv
-    }
-    Product {
-        int id
-        string title
-        string category
-        float rating
-        float price
-    }
-    WaitingProduct ||--|| Product : references
-    WaitingProduct {
-        int product_id
-        float budget
-    }
-    AdGroup {
-        int id
-        enum status
-        enum ad_type
-        float bid_amount
-        float total_budget
-        string image_url
-    }
-    AdGroup ||--o| Product : product_1
-    AdGroup ||--o| Product : product_2
-    AdGroup ||--o| Product : product_3
-    BigSeller ||--o{ AdGroup : individual_ads
-```
-
-### Click Attribution Flow
+### Click attribution
 
 ```mermaid
 sequenceDiagram
@@ -262,119 +348,95 @@ sequenceDiagram
     participant RD as Redis click_metrics
 
     C->>API: ad_id + product_id
-    API->>RD: HINCRBY click_metrics seller_id
-    API->>PG: total_budget -= ₹2 (CLICK_COST)
+    API->>RD: HINCRBY click_metrics product_id
+    API->>PG: total_budget -= ₹2
     alt budget <= 0
-        API->>PG: delete AdGroup
+        API->>PG: delete AdGroup, return products to pool
         API->>API: promote_to_active_ads()
     end
 ```
 
 ---
 
-## API Overview
+## API overview
 
 | Endpoint | Purpose |
 |----------|---------|
+| `GET /api/health` | Deploy health check |
 | `POST /api/pool/join` | Seller submits product + budget to waiting pool |
-| `POST /api/pool/matchmake` | Run 7-layer AI matchmaker (up to 10 trios) |
-| `POST /api/pool/bidding` | Simulated auction → top 3 to queue → active |
+| `POST /api/pool/matchmake` | Run 7-layer matchmaker (3 trios local / 10 production) |
+| `POST /api/pool/bidding` | Auction vs enterprise → top 3 to queue → active |
 | `GET /api/pool/status` | Live pipeline buckets (Demo Console) |
 | `GET /api/combo-ads/active` | Active sponsored ads for customer feed |
-| `POST /api/ads/click` | Click attribution + budget debit |
-| `GET /api/seller/metrics` | Campaign stats + Redis click count |
-| `GET /api/logs/stream` | SSE log stream (Redis pub/sub) |
+| `POST /api/ads/click` | Per-product click + budget debit |
+| `GET /api/seller/metrics` | Active campaigns, clicks, spend, sales |
+| `GET /api/seller/pipeline` | Per-product pipeline stages |
+| `GET /api/logs/stream` | SSE log stream for Demo Console |
 
 ---
 
-## Edge Cases & Tradeoffs
-
-### Edge cases handled
+## Edge cases handled
 
 | Scenario | Behavior |
 |----------|----------|
-| Seller exceeds ₹150 budget cap | Blocked at pool join |
-| Product rating < 4.0 | Rejected by gatekeeper |
-| Waiting pool < 3 products | Auto-seeds demo products; matchmake fails gracefully if still insufficient |
-| Gemini API unavailable | Lexical fallback embeddings (same dimension); matchmaker still runs |
-| Redis unavailable | In-memory fallback for clicks/logs (lost on restart) |
-| Cloudinary upload fails | Combo banner saved to `backend/static/` |
-| Pooled ad loses bidding | Products returned to waiting pool with proportional budget |
-| Active ad expires | Background orchestrator removes after 1 hour; promotes from queue |
-| Enterprise vs pooled bid | Pooled `bid_amount` = sum of trio budgets; often beats ₹20–45 enterprise bids |
-
-### Tradeoffs (hackathon scope)
-
-| Decision | Tradeoff |
-|----------|----------|
-| **Redis for clicks, Postgres for ads** | Fast metrics vs durability — clicks not persisted to SQL |
-| **Manual bidding via Demo Console** | Clear demo narrative vs real-time CPC auction engine |
-| **Simulated enterprise competitors** | Shows David vs Goliath story vs live big-seller integration |
-| **Sequential embedding calls** | Simple Gemini integration vs batch latency (~1–2 min for 10 trios) |
-| **Demo Console separated from Seller UI** | Authentic product UX vs exposing internal pipeline to sellers |
-| **Auto-seed waiting pool** | Reliable demo vs production-only organic pool growth |
+| Seller exceeds ₹150 spend cap | Blocked at pool join |
+| Product rating &lt; 4.0 | Rejected by gatekeeper |
+| Pool lacks Top+Bottom+Accessory | Fallback combo + **No valid trio** message on feed |
+| Waiting pool &lt; 3 products | Auto-seeds demo products |
+| Gemini unavailable | Lexical fallback embeddings; matchmaker still runs |
+| Redis unavailable | In-memory clicks/logs (local demo) |
+| Cloudinary upload fails | Banner saved to `backend/static/` |
+| Pooled ad loses bidding | All 3 products return to waiting pool |
+| Active ad expires | Removed after 1 hour; next queued ad promotes |
+| Seller withdraws from live Jodi | Jodi split; other products return to waiting |
 
 ---
 
 ## Setup
 
-### Local demo (recommended for hackathon)
+### Production deploy
 
-No accounts or `.env` file required. `./start-demo.sh` sets `LOCAL_DEMO=1`, which:
-
-- Uses **SQLite** (`backend/mock_v4.db`) — pre-seeded data ships with the repo
-- Skips Neon, Upstash Redis, Gemini, and Cloudinary (lexical embeddings + local images)
-- Runs 3 matchmade trios per click (fast for live demos)
-
-```bash
-./start-demo.sh
-```
-
-### Production / cloud deploy (optional)
-
-For Neon Postgres, Redis, Gemini, and Cloudinary, create `backend/.env` and run **without** `LOCAL_DEMO=1`:
+**Render (backend):** configured in `render.yaml`. Set in dashboard:
 
 ```env
-DATABASE_URL=postgresql://user:pass@host/neondb?sslmode=require
-REDIS_URL=redis://default:token@your-instance.upstash.io:6379
-GEMINI_API_KEY=your_gemini_api_key
-CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
-FRONTEND_URL=http://127.0.0.1:5173
+DATABASE_URL=postgresql://...
+REDIS_URL=redis://...
+GEMINI_API_KEY=...
+CLOUDINARY_URL=cloudinary://...
+FRONTEND_URL=https://meesho-beige-three.vercel.app
 ```
 
-Manual run:
+**Vercel (frontend):** set at build time:
+
+```env
+VITE_API_URL=https://meesho-backend-wgsi.onrender.com
+```
+
+Verify after deploy:
 
 ```bash
-cd backend && python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload
-
-cd frontend && npm install && npm run dev
+bash scripts/verify-deploy.sh
 ```
 
-Optional frontend override:
+### Manual local run (with cloud services)
+
+Create `backend/.env` and run without `LOCAL_DEMO`:
 
 ```bash
-# frontend/.env.local
-VITE_API_URL=http://127.0.0.1:8000
+cd backend && source venv/bin/activate && uvicorn main:app --reload
+cd frontend && npm run dev
 ```
-
-### Deploy (Render)
-
-Backend is configured in `render.yaml`. Set env vars in the Render dashboard and deploy the `backend/` service.
 
 ---
 
-## Future Enhancements
+## Future enhancements
 
-1. **Generative ad backgrounds** — Stable Diffusion / Midjourney lifestyle scenes instead of flat stitching
-2. **Dynamic Jodi bundle discounts** — auto-apply cart discount when all three combo products are added
-3. **Smart budget auto-top-up** — sellers set rules to keep winning Jodis alive
-4. **Seller analytics dashboard** — which partnerships drive highest CTR/conversion
-5. **Cross-category syndication** — physical products + digital services (e.g., yoga mat + online class)
-6. **Persist clicks to PostgreSQL** — durable billing and invoice generation
-7. **Real-time CPC bidding** — WebSocket auction instead of batch rank-and-select
-8. **Push notifications** — notify sellers when their Jodi goes live
+1. Generative lifestyle backgrounds for combo banners
+2. Dynamic Jodi bundle discounts at checkout
+3. Smart budget auto-top-up rules
+4. Persist clicks to PostgreSQL for billing
+5. Real-time WebSocket CPC bidding
+6. Push notifications when a Jodi goes live
 
 ---
 
@@ -384,4 +446,4 @@ Built for **Meesho Hackathon** · **ScriptedBy{Her} 2.0**
 
 ---
 
-*The Meesho Ad-Pool democratizes visibility. When small sellers collaborate, they compete with anyone.*
+*When small sellers collaborate, they compete with anyone.*

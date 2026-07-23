@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, ShoppingCart, LogOut } from 'lucide-react';
 import { API_URL } from '../config';
+import DemoGuideBar from '../components/DemoGuideBar';
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -64,6 +65,7 @@ function SmartComboAd({ comboAd }) {
   }
 
    const products = comboAd.products || [];
+  const showInvalidTrio = comboAd.valid_trio === false;
   return (
     <div className="bg-white overflow-hidden rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 relative group sm:col-span-2 lg:col-span-2">
       <div className="absolute top-0 right-0 bg-[#F47216] text-[#410F29] px-4 py-1.5 text-[10px] font-black uppercase tracking-wider z-20 border-b-[3px] border-l-[3px] border-black shadow-[-4px_4px_0px_0px_rgba(0,0,0,1)] rounded-bl-xl">
@@ -101,7 +103,18 @@ function SmartComboAd({ comboAd }) {
       
       <div className="p-4 sm:p-6 flex flex-col flex-grow bg-white">
         <h3 className="text-xl font-black uppercase tracking-tight text-[#410F29]">Trending Ad Ne Bana Di Jodi</h3>
-        <p className="mt-2 text-sm text-gray-700 line-clamp-2 font-bold uppercase tracking-wider">A perfect match curated for you.</p>
+        {showInvalidTrio ? (
+          <>
+            <p className="mt-3 text-sm font-black uppercase tracking-wide text-red-700 bg-red-50 border-2 border-red-600 rounded-xl px-3 py-2">
+              No valid trio — pool needs Top + Bottom + Accessory (or another full template set).
+            </p>
+            <p className="mt-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+              Showing best available combo until a proper Jodi can be formed.
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-gray-700 line-clamp-2 font-bold uppercase tracking-wider">A perfect match curated for you.</p>
+        )}
       </div>
     </div>
   );
@@ -215,7 +228,11 @@ export default function CustomerFeed() {
     </div>
     </nav>
 
-    <main className="relative z-10 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+      <DemoGuideBar compact className="max-w-3xl" />
+    </div>
+
+    <main className="relative z-10 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 pt-0">
     <div>
       <div className="mb-8 mt-4">
       <h2 className="text-3xl font-black uppercase tracking-tight text-[#410F29]">Discover</h2>

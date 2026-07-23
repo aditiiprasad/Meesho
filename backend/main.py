@@ -32,6 +32,7 @@ from models import (
 )
 from matchmaker import (
     broadcast_log, matchmake_optimized_trios, check_waiting_pool,
+    products_form_valid_trio,
     redis_hset, redis_hsetnx, redis_hincrby, redis_hget, redis_hexists, log_event_stream,
 )
 
@@ -97,15 +98,18 @@ def enrich_ad(db: Session, ad: AdGroup) -> dict:
         **ad_runtime_info(ad),
     }
     if ad.ad_type == AdType.pooled:
+        product_objs = []
         products = []
         for pid in [ad.product_1_id, ad.product_2_id, ad.product_3_id]:
             p = db.query(Product).filter(Product.id == pid).first()
             if p:
+                product_objs.append(p)
                 products.append({
                     "id": p.id, "title": p.title, "image_url": p.image_url,
-                    "seller_id": p.seller_id, "price": p.price,
+                    "seller_id": p.seller_id, "price": p.price, "category": p.category,
                 })
         info["products"] = products
+        info["valid_trio"] = products_form_valid_trio(product_objs)
     else:
         bs = db.query(BigSeller).filter(BigSeller.id == ad.big_seller_id).first()
         info["big_seller_name"] = bs.name if bs else "Enterprise"
@@ -551,14 +555,20 @@ async def pool_matchmake(db: Session = Depends(get_db)):
         if waiting_count < 3:
             raise HTTPException(status_code=400, detail="Not enough products in waiting pool for matchmaking.")
 
-    created = await matchmake_optimized_trios(count=MATCHMAKE_BATCH_SIZE)
+    created, invalid_trios = await matchmake_optimized_trios(count=MATCHMAKE_BATCH_SIZE)
     matchmade_count = db.query(AdGroup).filter(AdGroup.status == AdStatus.matchmade).count()
 
+    message = f"AI matchmade {created} optimized trios"
+    if invalid_trios:
+        message += f" ({invalid_trios} fallback — no valid cross-category trio in pool)"
+
     return {
-        "message": f"AI matchmade {created} optimized trios",
+        "message": message,
         "trios_created": created,
+        "invalid_trios": invalid_trios,
+        "no_valid_trio": invalid_trios > 0,
         "matchmade_count": matchmade_count,
-        "workflow_phase": "ready_to_bid",
+        "workflow_phase": "ready_to_bid" if created else "ready_to_matchmake",
     }
 
 
@@ -750,13 +760,18 @@ def get_active_combo_ads(db: Session = Depends(get_db)):
         products_data = []
 
         if not is_big_seller:
+            product_objs = []
             for pid in [ad.product_1_id, ad.product_2_id, ad.product_3_id]:
                 p = db.query(Product).filter(Product.id == pid).first()
                 if p:
+                    product_objs.append(p)
                     products_data.append({
                         "id": p.id, "title": p.title, "seller_id": p.seller_id,
-                        "budget": ad.total_budget / 3,
+                        "budget": ad.total_budget / 3, "category": p.category,
                     })
+            valid_trio = products_form_valid_trio(product_objs)
+        else:
+            valid_trio = True
 
         result.append({
             "id": ad.id,
@@ -764,6 +779,7 @@ def get_active_combo_ads(db: Session = Depends(get_db)):
             "is_big_seller": is_big_seller,
             "total_budget": ad.total_budget,
             "products": products_data,
+            "valid_trio": valid_trio,
             **ad_runtime_info(ad),
         })
 

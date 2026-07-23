@@ -143,7 +143,10 @@ export default function DemoConsole() {
       const res = await fetch(`${API_URL}/api/pool/matchmake`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        showToast(`Matchmade ${data.trios_created} trios`);
+        const msg = data.no_valid_trio
+          ? `Matchmade ${data.trios_created} trios — no valid cross-category trio (fallback used)`
+          : `Matchmade ${data.trios_created} trios`;
+        showToast(msg);
         fetchStatus();
       } else {
         showToast(data.detail || `Matchmake failed (${res.status})`);
