@@ -1,3 +1,8 @@
+/**
+ * Demo Console — presenter controls (bottom-right on all pages).
+ * Triggers POST /api/pool/matchmake and /api/pool/bidding; polls GET /api/pool/status.
+ * Not shown to sellers in a real product — separated for hackathon demo narrative.
+ */
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {

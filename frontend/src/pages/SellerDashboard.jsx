@@ -1,3 +1,7 @@
+/**
+ * Seller Dashboard — authentic seller UI.
+ * Sections: Join Ad Ne Bana Di Jodi (pool join), Your Ad Pipeline (stages), Active Campaigns (metrics).
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';

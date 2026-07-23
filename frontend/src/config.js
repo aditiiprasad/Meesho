@@ -1,4 +1,8 @@
-/** Production fallback so Vercel works even if VITE_API_URL was not set at build time. */
+/**
+ * API base URL.
+ * - Local: frontend/.env.local → http://127.0.0.1:8000
+ * - Production: VITE_API_URL at Vercel build time, or fallback below
+ */
 const PRODUCTION_API = 'https://meesho-backend-wgsi.onrender.com';
 const LOCAL_API = 'http://127.0.0.1:8000';
 

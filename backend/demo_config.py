@@ -1,6 +1,10 @@
-"""Local demo vs production configuration.
+"""Runtime configuration — local demo vs production.
 
-Set LOCAL_DEMO=1 (via start-demo.sh) to run without .env, Neon, Redis, Gemini, or Cloudinary.
+LOCAL_DEMO=1 (via start-demo.sh):
+  SQLite file, no .env, no Neon/Redis/Gemini/Cloudinary
+
+Production (DATABASE_URL set on Render):
+  Neon Postgres, Upstash Redis, optional Gemini + Cloudinary
 """
 import os
 

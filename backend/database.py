@@ -1,3 +1,12 @@
+"""
+Database layer — connection, seeding, pool helpers
+==================================================
+
+  engine / SessionLocal   SQLAlchemy (Postgres on Render, SQLite for LOCAL_DEMO)
+  seed_data()             Creates tables, demo catalog, waiting pool
+  get_products_in_pooling Counts products a seller has across waiting + pipeline
+  seed_waiting_pool()     Pre-fills pool so matchmaking works with one real seller
+"""
 import os
 import random
 from datetime import datetime

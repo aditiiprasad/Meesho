@@ -1,3 +1,7 @@
+/**
+ * Customer Feed — product grid with interleaved sponsored combo ads.
+ * Clicks POST /api/ads/click with product_id for per-seller attribution.
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, ShoppingCart, LogOut } from 'lucide-react';

@@ -1,3 +1,7 @@
+/**
+ * App shell — React Router routes + landing page.
+ * DemoGuideBar on home opens judge walkthrough modals (How to Test Demo / What Actually Happens).
+ */
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SellerLogin from './pages/SellerLogin';
 import CustomerLogin from './pages/CustomerLogin';

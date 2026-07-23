@@ -1,3 +1,6 @@
+/**
+ * Judge walkthrough + system rules modals (landing page buttons).
+ */
 import { useState } from 'react';
 import { HelpCircle, BookOpen } from 'lucide-react';
 import DemoGuideModal from './DemoGuideModal';

@@ -1,3 +1,16 @@
+"""
+FastAPI backend — Ad Ne Bana Di Jodi
+====================================
+
+HTTP API for the Meesho hackathon demo. Route groups:
+
+  Auth          seller/customer register & login
+  Catalog       products CRUD
+  Pool          join, withdraw, matchmake, bidding (Demo Console triggers)
+  Ads           active combo feed, click attribution, lifecycle
+  Seller        pipeline stages, campaign metrics
+  System        health, ping, SSE log stream
+"""
 import os
 from typing import Optional
 
@@ -251,6 +264,8 @@ app.add_middleware(
 )
 
 
+# --- Auth: register & login (demo accounts seeded in database.ensure_demo_accounts) ---
+
 @app.post("/api/seller-register")
 def seller_register(req: RegisterRequest, db: Session = Depends(get_db)):
     existing = db.query(Seller).filter(Seller.email == req.email).first()
@@ -485,6 +500,8 @@ async def seller_pay(
     return {"message": "Payment successful"}
 
 
+# --- Pool lifecycle: join → matchmake → bid → queue → active (see matchmaker.py) ---
+
 @app.post("/api/pool/join")
 async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
     if req.budget > 150.0:
@@ -664,6 +681,8 @@ async def log_stream():
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
+# --- Ads: click attribution (Redis per product) + budget debit ---
+
 @app.post("/api/ads/click")
 async def ad_click(req: AdClickRequest, db: Session = Depends(get_db)):
     ad = db.query(AdGroup).filter(AdGroup.id == req.ad_id).first()
@@ -795,6 +814,8 @@ def get_active_combo_ads(db: Session = Depends(get_db)):
 
     return result
 
+
+# --- Seller dashboard: pipeline stages + per-product campaign metrics ---
 
 @app.get("/api/seller/pipeline")
 def get_seller_pipeline(seller_id: int, db: Session = Depends(get_db)):

@@ -1,3 +1,12 @@
+"""
+SQLAlchemy ORM models + Pydantic request/response schemas.
+
+Tables:
+  sellers, customers, products     core catalog
+  waiting_products                 pool queue (product + budget)
+  ad_groups                        pooled or enterprise ads (lifecycle status)
+  big_sellers, big_seller_products simulated enterprise competitors
+"""
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import declarative_base
 from pydantic import BaseModel

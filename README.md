@@ -2,25 +2,13 @@
 
 > **ScriptedBy{Her} 2.0** · Collaborative Ad-Pool for Micro-Sellers on Meesho
 
-## Live demo (submission)
-
-| | URL |
-|---|-----|
-| **App (submit this link)** | https://meesho-beige-three.vercel.app |
-| Backend API | https://meesho-backend-wgsi.onrender.com |
-| Repository | https://github.com/aditiiprasad/Meesho |
-
-**Quick judge flow:** Landing → **How to Test Demo** → **Guest Seller** → join pool → **Demo Console** (bottom-right) → matchmake → bid → **Guest Customer** → click ad → back to seller **Active Campaigns**.
-
-**Guest accounts:** `seller1@test.com` / `password` · `customer@example.com` / `password` (or use **Guest** buttons on login pages).
-
 ---
 
 ## Page-by-page overview
 
-Screenshots live in the [`demo/`](demo/) folder at the repo root. Add PNG/JPG files using the names below — the README will display them automatically once uploaded.
+Screenshots are in [`demo/`](demo/). The landing page includes **How to Test Demo** and **What Actually Happens** — open those modals for the full walkthrough.
 
-The landing page includes **How to Test Demo** and **What Actually Happens** guide buttons; open those modals for the full walkthrough.
+**Guest accounts:** `seller1@test.com` / `password` · `customer@example.com` / `password` (or use **Guest** buttons on login pages).
 
 ---
 
@@ -158,18 +146,6 @@ The landing page includes **How to Test Demo** and **What Actually Happens** gui
 
 ---
 
-### In-app guide modals (optional screenshots)
-
-![How to Test Demo modal](demo/08-how-to-use-modal.png)
-
-**How to Test Demo** — 4-phase judge walkthrough: Seller pool → Demo Console → Customer clicks → Seller metrics.
-
-![What Actually Happens modal](demo/09-what-happens-modal.png)
-
-**What Is Happening** — full system flowchart: pool → 7 layers → matchmade → auction → queue → live → clicks → expire/withdraw loop.
-
----
-
 ## Problem
 
 On large e-commerce platforms, premium sponsored slots are won by **highest CPC bids**. Enterprise brands with ₹ lakhs in ad spend dominate page-1 real estate. A micro-seller with ₹100/day gets outbid instantly — quality products stay buried.
@@ -197,20 +173,6 @@ Three **complementary** products from independent sellers (e.g. Top + Bottom + A
 - **AI-composed Jodis** — template combos (*Outfit*, *Home Decor*, *Cricket Kit*) with Gemini semantic scoring
 - **Fair attribution** — ₹2/click debits Jodi budget; per-product click counts in Redis
 - **Judge-ready UX** — authentic Seller/Customer UI + Demo Console + in-app guide modals on the landing page
-
----
-
-## Quick start (local)
-
-No `.env` required for local demo:
-
-```bash
-./start-demo.sh
-# Backend  → http://127.0.0.1:8000  (SQLite mock_v4.db, in-memory metrics)
-# Frontend → http://127.0.0.1:5173
-```
-
-`LOCAL_DEMO=1` uses SQLite, skips Neon/Redis/Gemini/Cloudinary, and runs **3 trios** per matchmake click (faster for live demos).
 
 ---
 
@@ -260,7 +222,7 @@ Meesho/
 | **Backend** | FastAPI, Python 3.11, Uvicorn, Pydantic v2 |
 | **Database** | PostgreSQL (Neon) · SQLite for local demo |
 | **Cache / Metrics** | Redis (Upstash) — per-product clicks, pub/sub logs · in-memory fallback locally |
-| **AI / ML** | Google Gemini (`gemini-embedding-001`) + lexical fallback · scikit-learn cosine similarity |
+| **AI / ML** | Google Gemini (`gemini-embedding-001`) + lexical fallback · NumPy cosine similarity |
 | **Media** | Cloudinary uploads · Pillow 900×300 compositing |
 | **Deploy** | Vercel (frontend) · Render (backend) |
 
@@ -362,7 +324,8 @@ sequenceDiagram
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /api/health` | Deploy health check |
+| `GET /api/ping` | Lightweight liveness (no DB) |
+| `GET /api/health` | Full health check (includes DB) |
 | `POST /api/pool/join` | Seller submits product + budget to waiting pool |
 | `POST /api/pool/matchmake` | Run 7-layer matchmaker (3 trios local / 10 production) |
 | `POST /api/pool/bidding` | Auction vs enterprise → top 3 to queue → active |
@@ -392,40 +355,17 @@ sequenceDiagram
 
 ---
 
-## Setup
-
-### Production deploy
-
-**Render (backend):** configured in `render.yaml`. Set in dashboard:
-
-```env
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
-GEMINI_API_KEY=...
-CLOUDINARY_URL=cloudinary://...
-FRONTEND_URL=https://meesho-beige-three.vercel.app
-```
-
-**Vercel (frontend):** set at build time:
-
-```env
-VITE_API_URL=https://meesho-backend-wgsi.onrender.com
-```
-
-Verify after deploy:
+## Local development
 
 ```bash
-bash scripts/verify-deploy.sh
+./start-demo.sh
+# Backend  → http://127.0.0.1:8000  (SQLite, in-memory metrics)
+# Frontend → http://127.0.0.1:5173
 ```
 
-### Manual local run (with cloud services)
+`LOCAL_DEMO=1` uses SQLite, skips Neon/Redis/Gemini/Cloudinary, and runs **3 trios** per matchmake click.
 
-Create `backend/.env` and run without `LOCAL_DEMO`:
-
-```bash
-cd backend && source venv/bin/activate && uvicorn main:app --reload
-cd frontend && npm run dev
-```
+To run with cloud services, create `backend/.env` from `backend/.env.example` and start backend + frontend manually.
 
 ---
 
