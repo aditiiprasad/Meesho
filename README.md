@@ -2,6 +2,19 @@
 
 > **ScriptedBy{Her} 2.0** · Collaborative Ad-Pool for Micro-Sellers on Meesho
 
+## Live demo (submission)
+
+| | URL |
+|---|-----|
+| **App (submit this link)** | https://meesho-beige-three.vercel.app |
+| Backend API | https://meesho-backend-wgsi.onrender.com |
+
+**Judge flow:** Open the app → click **How to Test Demo** (blinking button) → **Guest Seller** → join pool → **Demo Console** (bottom-right) → matchmake → bid → **Guest Customer** → click ad → back to seller metrics.
+
+**Guest accounts:** `seller1@test.com` / `password` · `customer@example.com` / `password` (or use Guest buttons).
+
+---
+
 A hackathon prototype that lets Tier-2/3 micro-sellers **pool micro-budgets (₹50–150)** into AI-matched **combo ads ("Jodis")**, compete with enterprise brands for premium feed slots, and track campaign performance — without fighting the CPC bidding war alone.
 
 ---

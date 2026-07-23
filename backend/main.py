@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from database import (
     get_db, seed_data, seed_products_for_seller,
     ensure_big_sellers, seed_waiting_pool, get_products_in_pooling, ensure_demo_accounts,
+    repair_seller_pool_caps,
 )
 from models import (
     Seller, Customer, Product,
@@ -134,6 +135,14 @@ async def lifespan(app: FastAPI):
     if LOCAL_DEMO:
         print("LOCAL DEMO mode: SQLite (mock_v4.db), in-memory metrics, no .env required.")
     await asyncio.to_thread(seed_data)
+    if not LOCAL_DEMO:
+        db = next(get_db())
+        try:
+            fixed = repair_seller_pool_caps(db, MAX_POOLING_PRODUCTS_PER_SELLER)
+            if fixed:
+                print(f"Repaired seller pool caps: removed {fixed} excess waiting-pool product(s).")
+        finally:
+            db.close()
     print("Database seeded and ready.")
     task = asyncio.create_task(background_orchestrator())
     yield
@@ -457,6 +466,8 @@ async def seller_pay(
 async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
     if req.budget > 150.0:
         raise HTTPException(status_code=400, detail="Budget exceeds micro-budget cap (Rs.150).")
+    if req.budget < 50.0:
+        raise HTTPException(status_code=400, detail="Budget must be at least Rs.50.")
 
     seller = db.query(Seller).filter(Seller.id == req.seller_id).first()
     if not seller:
@@ -497,7 +508,12 @@ async def join_ad_pool(req: PoolJoinRequest, db: Session = Depends(get_db)):
     db.add(WaitingProduct(product_id=product.id, budget=req.budget))
     db.commit()
 
-    seeded = seed_waiting_pool(db, exclude_product_ids={req.product_id}, target_count=WAITING_POOL_TARGET)
+    seeded = seed_waiting_pool(
+        db,
+        exclude_product_ids={req.product_id},
+        exclude_seller_ids={req.seller_id},
+        target_count=WAITING_POOL_TARGET,
+    )
     await broadcast_log(f"[Gatekeeper] Seller {req.seller_id} joined pool with product {req.product_id}. Seeded {seeded} additional products.")
 
     waiting_count = db.query(WaitingProduct).count()

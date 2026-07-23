@@ -125,6 +125,33 @@ def get_products_in_pooling(db, seller_id: int) -> set[int]:
     return product_ids
 
 
+def repair_seller_pool_caps(db, max_per_seller: int = 3) -> int:
+    """Remove excess waiting-pool rows per seller (fixes legacy seed over-fill on Neon)."""
+    from models import WaitingProduct
+
+    removed = 0
+    seller_ids = [row[0] for row in db.query(Product.seller_id).distinct().all()]
+    for seller_id in seller_ids:
+        while len(get_products_in_pooling(db, seller_id)) > max_per_seller:
+            seller_pids = {
+                row[0]
+                for row in db.query(Product.id).filter(Product.seller_id == seller_id).all()
+            }
+            oldest = (
+                db.query(WaitingProduct)
+                .filter(WaitingProduct.product_id.in_(seller_pids))
+                .order_by(WaitingProduct.added_at.asc())
+                .first()
+            )
+            if not oldest:
+                break
+            db.delete(oldest)
+            removed += 1
+    if removed:
+        db.commit()
+    return removed
+
+
 def get_all_pooled_product_ids(db) -> set[int]:
     from models import AdGroup, AdStatus, WaitingProduct
 
@@ -140,14 +167,23 @@ def get_all_pooled_product_ids(db) -> set[int]:
     return ids
 
 
-def seed_waiting_pool(db, exclude_product_ids: Optional[set] = None, target_count: int = 30):
+def seed_waiting_pool(
+    db,
+    exclude_product_ids: Optional[set] = None,
+    exclude_seller_ids: Optional[set] = None,
+    target_count: int = 30,
+    max_per_seller: int = 1,
+):
     from models import WaitingProduct
 
     exclude_product_ids = exclude_product_ids or set()
+    exclude_seller_ids = exclude_seller_ids or set()
     already_pooled = get_all_pooled_product_ids(db)
     exclude = exclude_product_ids | already_pooled
 
     query = db.query(Product).filter(Product.rating >= 4.0)
+    if exclude_seller_ids:
+        query = query.filter(~Product.seller_id.in_(exclude_seller_ids))
     if exclude:
         query = query.filter(~Product.id.in_(exclude))
     available = query.all()
@@ -166,8 +202,9 @@ def seed_waiting_pool(db, exclude_product_ids: Optional[set] = None, target_coun
     for sid in seller_ids:
         if seeded >= target_count:
             break
+        added_for_seller = 0
         for p in by_seller[sid]:
-            if seeded >= target_count:
+            if seeded >= target_count or added_for_seller >= max_per_seller:
                 break
             if p.id in exclude:
                 continue
@@ -177,6 +214,7 @@ def seed_waiting_pool(db, exclude_product_ids: Optional[set] = None, target_coun
             ))
             exclude.add(p.id)
             seeded += 1
+            added_for_seller += 1
 
     db.commit()
     return seeded
@@ -293,7 +331,7 @@ def seed_data():
         AdGroup.status.in_([AdStatus.matchmade, AdStatus.bidding, AdStatus.queued, AdStatus.active])
     ).count()
     if db.query(WaitingProduct).count() < 15 and pipeline_count == 0:
-        seeded = seed_waiting_pool(db, target_count=30)
+        seeded = seed_waiting_pool(db, target_count=30, max_per_seller=1)
         if seeded:
             print(f"Demo ready: seeded {seeded} products into waiting pool.")
 

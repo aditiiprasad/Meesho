@@ -17,5 +17,6 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+        # Set to your Vercel URL, e.g. https://meesho-beige-three.vercel.app (no trailing slash)
       - key: GEMINI_API_KEY
         sync: false

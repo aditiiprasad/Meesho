@@ -29,3 +29,42 @@ body {
 .demo-console-callout {
   animation: demo-callout-float 2s ease-in-out infinite;
 }
+
+@keyframes demo-guide-blink {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 5px 5px 0 0 #000, 0 0 0 3px #f47216;
+    border-color: #000;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 5px 5px 0 0 #000, 0 0 0 7px rgba(244, 114, 22, 0.45), 0 0 18px rgba(244, 114, 22, 0.35);
+    border-color: #f47216;
+  }
+}
+
+@keyframes demo-rules-blink {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 5px 5px 0 0 #000, 0 0 0 3px #095955;
+    border-color: #000;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 5px 5px 0 0 #000, 0 0 0 7px rgba(9, 89, 85, 0.45), 0 0 18px rgba(9, 89, 85, 0.35);
+    border-color: #095955;
+  }
+}
+
+@keyframes judge-btn-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.demo-guide-btn-blink {
+  animation: demo-guide-blink 1.4s ease-in-out infinite, judge-btn-float 2.2s ease-in-out infinite;
+}
+
+.demo-rules-btn-blink {
+  animation: demo-rules-blink 1.4s ease-in-out infinite 0.7s, judge-btn-float 2.2s ease-in-out infinite 0.35s;
+}
