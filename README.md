@@ -20,7 +20,7 @@
 
 Screenshots live in the [`demo/`](demo/) folder at the repo root. Add PNG/JPG files using the names below — the README will display them automatically once uploaded.
 
-Every main screen also has **How to Use** and **What Is Happening** buttons at the top (same as the landing page) for in-app judge guidance.
+The landing page includes **How to Test Demo** and **What Actually Happens** guide buttons; open those modals for the full walkthrough.
 
 ---
 
@@ -196,7 +196,7 @@ Three **complementary** products from independent sellers (e.g. Top + Bottom + A
 - **Quality gate** — only 4.0+ rated products from eligible sellers enter the pool
 - **AI-composed Jodis** — template combos (*Outfit*, *Home Decor*, *Cricket Kit*) with Gemini semantic scoring
 - **Fair attribution** — ₹2/click debits Jodi budget; per-product click counts in Redis
-- **Judge-ready UX** — authentic Seller/Customer UI + Demo Console + in-app guide modals on every page
+- **Judge-ready UX** — authentic Seller/Customer UI + Demo Console + in-app guide modals on the landing page
 
 ---
 

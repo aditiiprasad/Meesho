@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, ShoppingCart, LogOut } from 'lucide-react';
 import { API_URL } from '../config';
-import DemoGuideBar from '../components/DemoGuideBar';
 
 const resolveImageUrl = (url) => {
   if (!url) return '';
@@ -228,11 +227,7 @@ export default function CustomerFeed() {
     </div>
     </nav>
 
-    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-      <DemoGuideBar compact className="max-w-3xl" />
-    </div>
-
-    <main className="relative z-10 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 pt-0">
+    <main className="relative z-10 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     <div>
       <div className="mb-8 mt-4">
       <h2 className="text-3xl font-black uppercase tracking-tight text-[#410F29]">Discover</h2>

@@ -305,6 +305,13 @@ def customer_login(req: LoginRequest, db: Session = Depends(get_db)):
     return {"message": "Login successful", "user": {"id": customer.id, "name": customer.name, "role": "customer"}}
 
 
+@app.get("/api/ping")
+@app.head("/api/ping")
+def ping():
+    """Lightweight liveness — no DB (for cold-start probes)."""
+    return {"status": "ok"}
+
+
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
     try:
@@ -923,5 +930,6 @@ async def get_seller_metrics(seller_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/")
+@app.head("/")
 def read_root():
     return {"message": "Welcome to the FastAPI backend"}

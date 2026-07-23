@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
 import { LoadingButtonContent } from '../components/ButtonSpinner';
-import DemoGuideBar from '../components/DemoGuideBar';
 import { Store, Plus, Package, LogOut, X, Image as ImageIcon, TrendingUp, Zap, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function SellerDashboard() {
@@ -328,11 +327,7 @@ export default function SellerDashboard() {
   </div>
   </nav>
 
-  <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-   <DemoGuideBar compact className="max-w-3xl" />
-  </div>
-
-  <main className="relative z-10 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 pt-0">
+  <main className="relative z-10 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
   <div>
    {/* Ad Ne Bana Di Jodi Section */}
    <div className="mb-10 rounded-2xl overflow-hidden relative border-[4px] border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all">
