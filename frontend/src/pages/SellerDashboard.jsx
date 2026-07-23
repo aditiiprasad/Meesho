@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
+import { LoadingButtonContent } from '../components/ButtonSpinner';
 import { Store, Plus, Package, LogOut, X, Image as ImageIcon, TrendingUp, Zap, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function SellerDashboard() {
@@ -22,6 +23,7 @@ export default function SellerDashboard() {
  const [adPoolProductId, setAdPoolProductId] = useState('');
  const [isDeploying, setIsDeploying] = useState(false);
  const [metrics, setMetrics] = useState({ active: false, pooling_count: 0, active_ads: [] });
+ const [pipeline, setPipeline] = useState({ submitted_products: [], pooling_count: 0 });
 
  const [adPoolState, setAdPoolState] = useState('initial');
  const [sellerDetails, setSellerDetails] = useState(null);
@@ -37,6 +39,38 @@ export default function SellerDashboard() {
  stock: ''
  });
  const [isSubmitting, setIsSubmitting] = useState(false);
+ const [payingProductId, setPayingProductId] = useState(null);
+ const [removingProductId, setRemovingProductId] = useState(null);
+
+ const STAGE_LABELS = {
+  waiting: 'Waiting to Pool',
+  matchmade: 'Matchmade',
+  bidding: 'In Auction',
+  queued: 'In Queue',
+  active: 'Live',
+ };
+
+ const STAGE_COLORS = {
+  waiting: 'bg-gray-100 text-gray-800',
+  matchmade: 'bg-purple-100 text-purple-900',
+  bidding: 'bg-orange-100 text-orange-900',
+  queued: 'bg-yellow-100 text-yellow-900',
+  active: 'bg-emerald-100 text-emerald-900',
+ };
+
+ const poolingCount = pipeline.pooling_count ?? metrics.pooling_count ?? 0;
+
+ const refreshDashboard = () => {
+  if (!user?.id) return;
+  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`)
+   .then(r => r.json())
+   .then(setMetrics)
+   .catch(err => console.error('Metrics error:', err));
+  fetch(`${API_URL}/api/seller/pipeline?seller_id=${user.id}`)
+   .then(r => r.json())
+   .then(setPipeline)
+   .catch(err => console.error('Pipeline error:', err));
+ };
 
  useEffect(() => {
  if (!user) {
@@ -54,15 +88,10 @@ export default function SellerDashboard() {
   .then(data => setSellerDetails(data))
   .catch(err => console.error("Failed to fetch seller details", err));
 
- const fetchMetrics = () => {
-  fetch(`${API_URL}/api/seller/metrics?seller_id=${parsedUser.id}`)
-  .then(res => res.json())
-  .then(data => setMetrics(data))
-  .catch(err => console.error("Metrics error:", err));
- };
+ const fetchMetrics = refreshDashboard;
 
  fetchMetrics();
- const interval = setInterval(fetchMetrics, 5000);
+ const interval = setInterval(refreshDashboard, 5000);
  return () => clearInterval(interval);
  }, [navigate, user?.id]);
 
@@ -72,6 +101,7 @@ export default function SellerDashboard() {
  setProducts([]);
  setSellerDetails(null);
  setMetrics({ active: false, pooling_count: 0, active_ads: [] });
+ setPipeline({ submitted_products: [], pooling_count: 0 });
  navigate('/');
  };
 
@@ -202,7 +232,7 @@ export default function SellerDashboard() {
   });
   if (response.ok) {
   setAdPoolState('pooled_done');
-  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`).then(r => r.json()).then(setMetrics);
+  refreshDashboard();
   } else {
   const errorData = await response.json().catch(() => ({}));
   alert(`Failed to join pool: ${errorData.detail || 'Unknown error'}`);
@@ -218,6 +248,10 @@ export default function SellerDashboard() {
  if (!user) return null;
 
  const handleRemoveFromPool = async (productId) => {
+  if (!window.confirm('Withdraw this product from the ad pipeline? If it is in a combo ad, the Jodi will be split.')) {
+   return;
+  }
+  setRemovingProductId(productId);
   try {
    const res = await fetch(`${API_URL}/api/pool/remove`, {
     method: 'POST',
@@ -225,25 +259,23 @@ export default function SellerDashboard() {
     body: JSON.stringify({ seller_id: user.id, product_id: productId })
    });
    if (res.ok) {
-    alert("Product removed from Ad Ne Bana Di Jodi.");
-    fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`).then(r => r.json()).then(setMetrics);
+    const data = await res.json();
+    refreshDashboard();
+    alert(data.message || 'Product withdrawn from the pipeline.');
    } else {
     const err = await res.json();
-    alert(`Failed to remove: ${err.detail}`);
+    alert(`Failed to withdraw: ${err.detail}`);
    }
   } catch (e) {
    console.error(e);
+   alert('Could not reach the server.');
+  } finally {
+   setRemovingProductId(null);
   }
  };
 
- const refreshMetrics = () => {
-  fetch(`${API_URL}/api/seller/metrics?seller_id=${user.id}`)
-   .then(r => r.json())
-   .then(setMetrics)
-   .catch(err => console.error("Metrics error:", err));
- };
-
  const handlePayBalance = async (productId) => {
+  setPayingProductId(productId);
   try {
    const url = productId
     ? `${API_URL}/api/seller/pay?seller_id=${user.id}&product_id=${productId}`
@@ -251,10 +283,12 @@ export default function SellerDashboard() {
    const res = await fetch(url, { method: 'POST' });
    if (res.ok) {
     alert("Payment successful!");
-    refreshMetrics();
+    refreshDashboard();
    }
   } catch (e) {
    console.error(e);
+  } finally {
+   setPayingProductId(null);
   }
  };
 
@@ -433,20 +467,29 @@ export default function SellerDashboard() {
         </div>
        </div>
        
-       {(metrics.pooling_count ?? 0) >= 3 && (
+   {(metrics.pooling_count ?? 0) >= 3 && (
         <div className="p-3 bg-amber-50 text-amber-800 rounded-xl border-2 border-amber-400 text-sm font-bold text-center">
-         You already have 3 products in the pooling process (max limit).
+         You have {poolingCount}/3 products in the pipeline (max limit). Withdraw one below to add another.
         </div>
        )}
 
        <div className="pt-4">
         <button
         onClick={handleDecideToPool}
-        disabled={isDeploying || (metrics.pooling_count ?? 0) >= 3}
-        className="w-full flex justify-center items-center px-4 py-3.5 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50"
+        disabled={isDeploying || poolingCount >= 3}
+        className="w-full flex justify-center items-center gap-2 px-4 py-3.5 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50 disabled:hover:translate-y-0"
         >
-        <Zap className="h-6 w-6 mr-2 text-white"/>
-        {isDeploying ? 'Joining Pool...' : 'Decide to Pool'}
+        {isDeploying ? (
+          <>
+            <Loader2 className="h-6 w-6 animate-spin" />
+            Joining Pool...
+          </>
+        ) : (
+          <>
+            <Zap className="h-6 w-6 text-white"/>
+            Decide to Pool
+          </>
+        )}
         </button>
        </div>
       </div>
@@ -459,7 +502,7 @@ export default function SellerDashboard() {
        </div>
        <h3 className="text-2xl font-black text-[#410F29] mb-2 uppercase tracking-tight">You're in the pool!</h3>
        <p className="text-gray-700 font-bold mb-6 max-w-md mx-auto">
-        Your product has been submitted. We'll notify you when your combo ad goes live — check back here for campaign performance.
+        Your product is in the pipeline below. Use Demo Console to run matchmaking when ready.
        </p>
        <button
         onClick={() => { setIsAdPoolOpen(false); setAdPoolState('initial'); }}
@@ -474,14 +517,81 @@ export default function SellerDashboard() {
     </div>
    )}
 
-   {(metrics.pooling_count ?? 0) > 0 && !metrics.active && (
+   {(metrics.pooling_count ?? 0) > 0 && !metrics.active && pipeline.submitted_products.length === 0 && (
     <div className="p-6 md:p-8 bg-[#095955]/5 border-t-[4px] border-[#095955] text-center">
      <p className="font-black text-[#410F29] uppercase tracking-tight">Campaign submitted</p>
      <p className="text-sm text-gray-700 font-bold mt-2 max-w-md mx-auto">
-      We're setting up your combo ad. Performance stats will show here once it goes live.
+      Refresh the page if your pipeline list does not appear yet.
      </p>
     </div>
    )}
+
+   {/* Ad pipeline — withdraw at any stage (waiting → live); live ads also appear in Active Campaigns below */}
+   {(() => {
+    const pipelineItems = pipeline.submitted_products.filter(
+     (item) => !(metrics.active && item.stage === 'active')
+    );
+    return pipelineItems.length > 0 && (
+    <div className="p-6 md:p-8 bg-white border-t-[4px] border-black">
+     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <h3 className="text-xl font-black uppercase tracking-tight text-[#410F29]">
+       Your Ad Pipeline
+      </h3>
+      <span className="text-xs font-black uppercase tracking-wider text-[#095955] bg-[#095955]/10 px-3 py-1 rounded-lg border-2 border-black">
+       {poolingCount}/3 slots used
+      </span>
+     </div>
+     <p className="text-xs font-bold text-gray-600 mb-4 uppercase tracking-wide">
+      Withdraw anytime to free a slot — works in waiting, matchmade, auction, queue, or live.
+     </p>
+     <div className="space-y-3">
+      {pipelineItems.map((item) => (
+       <div
+        key={item.product_id}
+        className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-[#F8F6F0] rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+       >
+        {item.image_url && (
+         <img
+          src={item.image_url.startsWith('/') ? `${API_URL}${item.image_url}` : item.image_url}
+          alt=""
+          className="w-14 h-14 object-cover rounded-lg border-2 border-black shrink-0"
+         />
+        )}
+        <div className="flex-1 min-w-0">
+         <p className="font-black text-[#410F29] uppercase tracking-tight truncate">{item.title}</p>
+         <div className="flex flex-wrap items-center gap-2 mt-1">
+          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-black ${STAGE_COLORS[item.stage] || STAGE_COLORS.waiting}`}>
+           {STAGE_LABELS[item.stage] || item.stage}
+          </span>
+          {item.budget != null && (
+           <span className="text-xs font-bold text-[#095955]">₹{Number(item.budget).toFixed(0)} budget</span>
+          )}
+          {item.ad_id && (
+           <span className="text-[10px] font-bold text-gray-500 uppercase">Ad #{item.ad_id}</span>
+          )}
+         </div>
+        </div>
+        <button
+         type="button"
+         onClick={() => handleRemoveFromPool(item.product_id)}
+         disabled={removingProductId === item.product_id}
+         className="shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 bg-red-100 text-red-600 text-xs font-black uppercase tracking-wider rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 transition-all disabled:opacity-50 sm:ml-auto"
+        >
+         {removingProductId === item.product_id ? (
+          <>
+           <Loader2 className="h-3.5 w-3.5 animate-spin" />
+           Withdrawing...
+          </>
+         ) : (
+          'Withdraw'
+         )}
+        </button>
+       </div>
+      ))}
+     </div>
+    </div>
+    );
+   })()}
 
    {/* Active Campaigns — one card per product with its own metrics */}
    {metrics.active && metrics.active_ads?.length > 0 && (
@@ -535,15 +645,31 @@ export default function SellerDashboard() {
          <div className="flex gap-3 mt-auto">
           <button
            onClick={() => handlePayBalance(myProduct.id)}
-           className="flex-1 bg-[#410F29] text-white text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+           disabled={payingProductId === myProduct.id || removingProductId === myProduct.id}
+           className="flex-1 flex items-center justify-center gap-1.5 bg-[#410F29] text-white text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
-           Pay Balance
+           {payingProductId === myProduct.id ? (
+             <>
+               <Loader2 className="h-3.5 w-3.5 animate-spin" />
+               Paying...
+             </>
+           ) : (
+             'Pay Balance'
+           )}
           </button>
           <button
            onClick={() => handleRemoveFromPool(myProduct.id)}
-           className="flex-1 bg-red-100 text-red-600 text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 transition-all"
+           disabled={removingProductId === myProduct.id || payingProductId === myProduct.id}
+           className="flex-1 flex items-center justify-center gap-1.5 bg-red-100 text-red-600 text-xs font-black uppercase tracking-wider py-2.5 rounded-xl border-[2px] border-red-600 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
-           Remove from Pool
+           {removingProductId === myProduct.id ? (
+             <>
+               <Loader2 className="h-3.5 w-3.5 animate-spin" />
+               Removing...
+             </>
+           ) : (
+             'Withdraw'
+           )}
           </button>
          </div>
         </div>
@@ -742,9 +868,11 @@ export default function SellerDashboard() {
      <button
       type="submit"
       disabled={isSubmitting}
-      className="w-full inline-flex justify-center items-center rounded-full shadow-md px-6 py-3 bg-[#095955] text-base font-bold text-white hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#074643] focus:outline-none transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-md sm:w-auto"
+      className="w-full inline-flex justify-center items-center gap-2 rounded-full shadow-md px-6 py-3 bg-[#095955] text-base font-bold text-white hover:-translate-y-0.5 hover:shadow-lg hover:bg-[#074643] focus:outline-none transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-md sm:w-auto"
      >
-      {isSubmitting ? 'Adding...' : 'Add Product'}
+      <LoadingButtonContent loading={isSubmitting} loadingText="Adding..." spinnerSize="h-4 w-4">
+       Add Product
+      </LoadingButtonContent>
      </button>
      <button
       type="button"

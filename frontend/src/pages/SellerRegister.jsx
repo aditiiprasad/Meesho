@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { LoadingButtonContent } from '../components/ButtonSpinner';
 
 export default function SellerRegister() {
  const [name, setName] = useState('');
  const [email, setEmail] = useState('');
  const [password, setPassword] = useState('');
  const [error, setError] = useState('');
+ const [loading, setLoading] = useState(false);
  const navigate = useNavigate();
 
  const handleRegister = async (e) => {
  e.preventDefault();
+ setLoading(true);
+ setError('');
  try {
   const response = await fetch(`${API_URL}/api/seller-register`, {
   method: 'POST',
@@ -27,6 +31,8 @@ export default function SellerRegister() {
   }
  } catch (err) {
   setError('Failed to connect to the server');
+ } finally {
+  setLoading(false);
  }
  };
 
@@ -56,7 +62,8 @@ export default function SellerRegister() {
     type="text"
     autoComplete="name"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
     placeholder="Full Name"
     value={name}
     onChange={(e) => setName(e.target.value)}
@@ -69,7 +76,8 @@ export default function SellerRegister() {
     type="email"
     autoComplete="email"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
     placeholder="Email address"
     value={email}
     onChange={(e) => setEmail(e.target.value)}
@@ -82,7 +90,8 @@ export default function SellerRegister() {
     type="password"
     autoComplete="new-password"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#095955]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
     placeholder="Password"
     value={password}
     onChange={(e) => setPassword(e.target.value)}
@@ -92,9 +101,12 @@ export default function SellerRegister() {
    <div className="space-y-4 pt-2">
    <button
     type="submit"
-    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all"
+    disabled={loading}
+    className="group relative w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50 disabled:hover:translate-y-0"
    >
-    Sign up
+    <LoadingButtonContent loading={loading} loadingText="Creating account..." spinnerSize="h-5 w-5">
+     Sign up
+    </LoadingButtonContent>
    </button>
    </div>
    <div className="text-center text-sm pt-4 font-black uppercase tracking-wider">

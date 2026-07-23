@@ -2,9 +2,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Activity, X, Clock, Gavel, Shuffle, Presentation,
-  CheckCircle2, User, ShoppingBag, ChevronRight,
+  CheckCircle2, User, ShoppingBag, ChevronRight, Loader2,
 } from 'lucide-react';
 import { API_URL } from '../config';
+import ButtonSpinner from './ButtonSpinner';
 
 const EMPTY = {
   waiting_pool: [],
@@ -63,7 +64,7 @@ function AdCard({ ad, onRemove, showRemove, showTimer, removing }) {
           className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center font-bold hover:bg-red-600 z-10 disabled:opacity-50"
           title="Remove active ad"
         >
-          ✕
+          {removing === ad.id ? <Loader2 className="h-3 w-3 animate-spin" /> : '✕'}
         </button>
       )}
       {ad.image_url && (
@@ -195,17 +196,41 @@ export default function DemoConsole() {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 p-3 bg-[#410F29] text-[#F47216] rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all flex items-center gap-2"
-        title="Presenter demo controls — not visible to end users in production"
-      >
-        <Presentation className="h-5 w-5" />
-        <span className="text-sm font-black uppercase hidden sm:inline">Demo Console</span>
-        {totalItems > 0 && (
-          <span className="bg-[#F47216] text-[#410F29] text-xs font-black px-2 py-0.5 rounded-full">{totalItems}</span>
-        )}
-      </button>
+      {!isOpen && (
+        <div className="fixed bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end gap-3 max-w-[min(100vw-2rem,20rem)]">
+          {/* Speech cloud — guides judges to Demo Console */}
+          <div
+            className="demo-console-callout relative bg-white text-[#410F29] px-4 py-3 rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center"
+            role="note"
+          >
+            <p className="text-sm sm:text-base font-black uppercase tracking-wide leading-snug">
+              Test the product
+            </p>
+            <p className="text-[10px] sm:text-xs font-bold text-[#F47216] mt-1 uppercase tracking-wider">
+              Tap Demo Console below ↓
+            </p>
+            {/* Cloud tail pointing to button */}
+            <span
+              className="absolute -bottom-2.5 right-8 w-4 h-4 bg-white border-r-[3px] border-b-[3px] border-black rotate-45"
+              aria-hidden="true"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="demo-console-btn-blink p-3 bg-[#410F29] text-[#F47216] rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform flex items-center gap-2"
+            title="Open Demo Console — run matchmaking and bidding"
+            aria-label="Open Demo Console to test the product"
+          >
+            <Presentation className="h-5 w-5 shrink-0" />
+            <span className="text-sm font-black uppercase">Demo Console</span>
+            {totalItems > 0 && (
+              <span className="bg-[#F47216] text-[#410F29] text-xs font-black px-2 py-0.5 rounded-full">{totalItems}</span>
+            )}
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end p-4">
@@ -306,8 +331,12 @@ export default function DemoConsole() {
                                 disabled={isMatchmaking || (status.waiting_pool?.length || 0) < 3}
                                 className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#F47216] text-[#410F29] text-xs font-black uppercase rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
                               >
-                                <Shuffle className="h-3.5 w-3.5" />
-                                {isMatchmaking ? 'Running...' : 'Run AI Matchmaking'}
+                                {isMatchmaking ? (
+                                  <ButtonSpinner size="h-3.5 w-3.5" />
+                                ) : (
+                                  <Shuffle className="h-3.5 w-3.5" />
+                                )}
+                                {isMatchmaking ? 'Matchmaking...' : 'Run AI Matchmaking'}
                               </button>
                             )}
 
@@ -317,8 +346,12 @@ export default function DemoConsole() {
                                 disabled={isRunningBidding || (status.matchmade_ads?.length || 0) === 0}
                                 className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#410F29] text-white text-xs font-black uppercase rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
                               >
-                                <Gavel className="h-3.5 w-3.5" />
-                                {isRunningBidding ? 'Running...' : 'Run Bidding'}
+                                {isRunningBidding ? (
+                                  <ButtonSpinner size="h-3.5 w-3.5" className="text-white" />
+                                ) : (
+                                  <Gavel className="h-3.5 w-3.5" />
+                                )}
+                                {isRunningBidding ? 'Running auction...' : 'Run Bidding'}
                               </button>
                             )}
 

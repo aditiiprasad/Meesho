@@ -390,7 +390,7 @@ async def pool_remove(req: RemovePoolRequest, db: Session = Depends(get_db)):
         db.delete(waiting)
         db.commit()
         await broadcast_log(f"[Gatekeeper] Product {req.product_id} removed from Waiting Pool.")
-        return {"message": "Removed from Waiting Pool"}
+        return {"message": "Product withdrawn from waiting pool. You can join again with another product."}
 
     active_ad = db.query(AdGroup).filter(
         or_(
@@ -405,12 +405,13 @@ async def pool_remove(req: RemovePoolRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Product not found in any pool/queue")
 
     was_active = active_ad.status == AdStatus.active
+    was_queued = active_ad.status == AdStatus.queued
 
     if active_ad.ad_type == AdType.individual:
         db.delete(active_ad)
         db.commit()
         await broadcast_log(f"[System] Individual ad {active_ad.id} permanently removed.")
-        if was_active:
+        if was_active or was_queued:
             await promote_to_active_ads()
         return {"message": "Ad permanently removed"}
 
@@ -424,9 +425,9 @@ async def pool_remove(req: RemovePoolRequest, db: Session = Depends(get_db)):
     db.delete(active_ad)
     db.commit()
     await broadcast_log(f"[System] Product {req.product_id} removed from pooled ad. Remaining products returned to Waiting Pool.")
-    if was_active:
+    if was_active or was_queued:
         await promote_to_active_ads()
-    return {"message": "Product removed. Remaining pooled products returned to Waiting Pool."}
+    return {"message": "Product withdrawn. Your slot is free; partner products returned to waiting pool."}
 
 
 @app.post("/api/seller/pay")

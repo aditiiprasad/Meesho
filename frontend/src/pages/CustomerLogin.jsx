@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { LoadingButtonContent } from '../components/ButtonSpinner';
 
 export default function CustomerLogin() {
  const [email, setEmail] = useState('');
@@ -68,7 +69,8 @@ export default function CustomerLogin() {
     type="email"
     autoComplete="email"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#F47216]/20 font-bold bg-[#F8F6F0] transition-all"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#F47216]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
     placeholder="Email address (customer@example.com)"
     value={email}
     onChange={(e) => setEmail(e.target.value)}
@@ -81,7 +83,8 @@ export default function CustomerLogin() {
     type="password"
     autoComplete="current-password"
     required
-    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#F47216]/20 font-bold bg-[#F8F6F0] transition-all"
+    disabled={loading}
+    className="appearance-none relative block w-full px-4 py-3.5 border-[3px] border-black text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#F47216]/20 font-bold bg-[#F8F6F0] transition-all disabled:opacity-50"
     placeholder="Password (password)"
     value={password}
     onChange={(e) => setPassword(e.target.value)}
@@ -91,16 +94,22 @@ export default function CustomerLogin() {
    <div className="space-y-4 pt-2">
    <button
     type="submit"
-    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-[#410F29] bg-[#F47216] transition-all"
+    disabled={loading}
+    className="group relative w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-xl font-black uppercase tracking-wider text-[#410F29] bg-[#F47216] transition-all disabled:opacity-50 disabled:hover:translate-y-0"
    >
-    Sign in
+    <LoadingButtonContent loading={loading} loadingText="Signing in..." spinnerSize="h-5 w-5">
+     Sign in
+    </LoadingButtonContent>
    </button>
    <button
     type="button"
     onClick={handleGuestLogin}
-    className="group relative w-full flex justify-center py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-lg font-black uppercase tracking-wider text-white bg-[#095955] transition-all"
+    disabled={loading}
+    className="group relative w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:translate-x-1 active:shadow-none text-lg font-black uppercase tracking-wider text-white bg-[#095955] transition-all disabled:opacity-50 disabled:hover:translate-y-0"
    >
-    Login as Guest Customer
+    <LoadingButtonContent loading={loading} loadingText="Logging in..." spinnerSize="h-5 w-5">
+     Login as Guest Customer
+    </LoadingButtonContent>
    </button>
    </div>
    <div className="text-center text-sm pt-4 font-black uppercase tracking-wider">
