@@ -13,8 +13,8 @@ DATABASE_URL = get_database_url()
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=2,
+    pool_size=3,
+    max_overflow=0,
     pool_timeout=10,
     connect_args=(
         {"check_same_thread": False}
@@ -288,7 +288,15 @@ def seed_data():
         except Exception:
             pass
 
-    if db.query(Product).count() < 200:
+    product_count = db.query(Product).count()
+    if product_count >= 200 and "postgres" in DATABASE_URL.lower():
+        ensure_big_sellers(db)
+        ensure_demo_accounts(db)
+        db.close()
+        print(f"Production DB ready ({product_count} products, skipped heavy re-seed).")
+        return
+
+    if product_count < 200:
         print("Database is empty. Seeding 200 random products...")
 
         sellers = []

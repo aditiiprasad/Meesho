@@ -26,7 +26,11 @@ from PIL import Image
 import redis.asyncio as redis
 import cloudinary
 import cloudinary.uploader
-from sklearn.metrics.pairwise import cosine_similarity
+def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if na == 0 or nb == 0:
+        return 0.0
+    return float(np.dot(a, b) / (na * nb))
 
 from demo_config import LOCAL_DEMO, USE_GEMINI_EMBEDDINGS
 from sqlalchemy.orm import Session
@@ -267,7 +271,7 @@ def _semantic_harmony_score(products: list[Product], embeddings: dict[int, np.nd
     sims = []
     for i in range(len(vecs)):
         for j in range(i + 1, len(vecs)):
-            sim = float(cosine_similarity([vecs[i]], [vecs[j]])[0][0])
+            sim = _cosine_sim(vecs[i], vecs[j])
             sims.append(max(0.0, min(1.0, (sim + 1) / 2)))  # map [-1,1] → [0,1]
     return sum(sims) / len(sims)
 

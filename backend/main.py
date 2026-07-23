@@ -4,8 +4,11 @@ from typing import Optional
 from demo_config import LOCAL_DEMO, MATCHMAKE_BATCH_SIZE, WAITING_POOL_TARGET, AUTO_MATCHMAKE_ON_JOIN
 
 if not LOCAL_DEMO:
-    import cloudinary
-    cloudinary.config()
+    try:
+        import cloudinary
+        cloudinary.config()
+    except Exception as e:
+        print(f"Cloudinary config skipped: {e}")
 
 import asyncio
 from contextlib import asynccontextmanager

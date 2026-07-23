@@ -1,7 +1,9 @@
-const defaultUrl = 'http://127.0.0.1:8000';
+/** Production fallback so Vercel works even if VITE_API_URL was not set at build time. */
+const PRODUCTION_API = 'https://meesho-backend-wgsi.onrender.com';
+const LOCAL_API = 'http://127.0.0.1:8000';
 
-export const API_URL = import.meta.env.VITE_API_URL || defaultUrl;
+export const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? PRODUCTION_API : LOCAL_API);
 
-/** True when Vercel/production build has no backend URL baked in at build time. */
-export const API_MISCONFIGURED =
-  import.meta.env.PROD && !import.meta.env.VITE_API_URL;
+export const API_MISCONFIGURED = false;

@@ -19,7 +19,7 @@ LOCAL_DEMO = _local_flag or not os.getenv("DATABASE_URL")
 
 MATCHMAKE_BATCH_SIZE = 3 if LOCAL_DEMO else 10
 WAITING_POOL_TARGET = 15 if LOCAL_DEMO else 30
-AUTO_MATCHMAKE_ON_JOIN = not LOCAL_DEMO  # skip slow background task during live demo
+AUTO_MATCHMAKE_ON_JOIN = False  # manual via Demo Console — keeps Render pool/join fast
 
 # Gemini Layer 3 embeddings — on in production when API key is set; lexical fallback on failure
 USE_GEMINI_EMBEDDINGS = not LOCAL_DEMO and bool(os.getenv("GEMINI_API_KEY", "").strip())
