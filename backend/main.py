@@ -130,23 +130,32 @@ async def remove_active_ad_by_id(ad_id: int):
         db.close()
 
 
+async def _bootstrap_database():
+    """Run seed/repair in the background so uvicorn binds $PORT before Render's port scan."""
+    try:
+        if LOCAL_DEMO:
+            print("LOCAL DEMO mode: SQLite (mock_v4.db), in-memory metrics, no .env required.")
+        await asyncio.to_thread(seed_data)
+        if not LOCAL_DEMO:
+            db = next(get_db())
+            try:
+                fixed = repair_seller_pool_caps(db, MAX_POOLING_PRODUCTS_PER_SELLER)
+                if fixed:
+                    print(f"Repaired seller pool caps: removed {fixed} excess waiting-pool product(s).")
+            finally:
+                db.close()
+        print("Database seeded and ready.")
+    except Exception as e:
+        print(f"Database bootstrap failed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if LOCAL_DEMO:
-        print("LOCAL DEMO mode: SQLite (mock_v4.db), in-memory metrics, no .env required.")
-    await asyncio.to_thread(seed_data)
-    if not LOCAL_DEMO:
-        db = next(get_db())
-        try:
-            fixed = repair_seller_pool_caps(db, MAX_POOLING_PRODUCTS_PER_SELLER)
-            if fixed:
-                print(f"Repaired seller pool caps: removed {fixed} excess waiting-pool product(s).")
-        finally:
-            db.close()
-    print("Database seeded and ready.")
-    task = asyncio.create_task(background_orchestrator())
+    bootstrap_task = asyncio.create_task(_bootstrap_database())
+    orchestrator_task = asyncio.create_task(background_orchestrator())
     yield
-    task.cancel()
+    bootstrap_task.cancel()
+    orchestrator_task.cancel()
 
 
 async def background_orchestrator():

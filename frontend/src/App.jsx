@@ -66,9 +66,10 @@ function Home() {
                         <span className="text-[#F47216] ml-1.5 border-b-2 border-[#F47216]">2.0</span>
                     </div>
                 </div>
-                <div className="flex gap-4">
-                    <a href="https://github.com/aditiiprasad" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">GITHUB</a>
-                    <a href="https://linkedin.com/in/aditiiprasad" target="_blank" rel="noreferrer" className="px-6 py-2.5 bg-[#095955] text-[#F8F6F0] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">LINKEDIN</a>
+                <div className="flex flex-wrap gap-3 sm:gap-4 justify-center">
+                    <a href="https://github.com/aditiiprasad/Meesho" target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-[#F8F6F0] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-[#F8F6F0] hover:bg-white transition-all">REPOSITORY</a>
+                    <a href="https://github.com/aditiiprasad" target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-[#F47216] text-[#410F29] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">GITHUB</a>
+                    <a href="https://linkedin.com/in/aditiiprasad" target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-[#095955] text-[#F8F6F0] font-black uppercase tracking-wider rounded-xl border-2 border-transparent hover:border-[#F8F6F0] transition-all">LINKEDIN</a>
                 </div>
             </header>
 

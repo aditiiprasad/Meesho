@@ -21,8 +21,8 @@ MATCHMAKE_BATCH_SIZE = 3 if LOCAL_DEMO else 10
 WAITING_POOL_TARGET = 15 if LOCAL_DEMO else 30
 AUTO_MATCHMAKE_ON_JOIN = not LOCAL_DEMO  # skip slow background task during live demo
 
-# Gemini Layer 3 embeddings — disabled for now (lexical fallback in matchmaker.py)
-USE_GEMINI_EMBEDDINGS = False
+# Gemini Layer 3 embeddings — on in production when API key is set; lexical fallback on failure
+USE_GEMINI_EMBEDDINGS = not LOCAL_DEMO and bool(os.getenv("GEMINI_API_KEY", "").strip())
 
 
 def get_database_url() -> str:

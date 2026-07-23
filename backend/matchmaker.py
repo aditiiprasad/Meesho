@@ -220,29 +220,30 @@ async def _embed_products(products: list[Product]) -> dict[int, np.ndarray]:
     if not missing:
         return _embedding_cache
 
-    # Gemini embeddings disabled (USE_GEMINI_EMBEDDINGS=False) — lexical fallback only.
-    # if _configure_gemini():
-    #     import google.generativeai as genai
-    #
-    #     async def _embed_one(product: Product):
-    #         try:
-    #             result = await asyncio.to_thread(
-    #                 genai.embed_content,
-    #                 model=EMBEDDING_MODEL,
-    #                 content=_product_text(product),
-    #                 task_type="SEMANTIC_SIMILARITY",
-    #             )
-    #             vec = np.array(result["embedding"], dtype=float)
-    #             _embedding_cache[product.id] = _normalize_embedding(vec)
-    #         except Exception as e:
-    #             print(f"Gemini embed failed for product {product.id}: {e}")
-    #             _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
-    #
-    #     await asyncio.gather(*[_embed_one(p) for p in missing])
-    # else:
-    await broadcast_log("[Layer 3] Using lexical fallback embeddings (Gemini disabled).")
-    for product in missing:
-        _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
+    if _configure_gemini():
+        import google.generativeai as genai
+
+        await broadcast_log("[Layer 3] Using Gemini embeddings for semantic harmony.")
+
+        async def _embed_one(product: Product):
+            try:
+                result = await asyncio.to_thread(
+                    genai.embed_content,
+                    model=EMBEDDING_MODEL,
+                    content=_product_text(product),
+                    task_type="SEMANTIC_SIMILARITY",
+                )
+                vec = np.array(result["embedding"], dtype=float)
+                _embedding_cache[product.id] = _normalize_embedding(vec)
+            except Exception as e:
+                print(f"Gemini embed failed for product {product.id}: {e}")
+                _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
+
+        await asyncio.gather(*[_embed_one(p) for p in missing])
+    else:
+        await broadcast_log("[Layer 3] Using lexical fallback embeddings (Gemini unavailable).")
+        for product in missing:
+            _embedding_cache[product.id] = _fallback_embedding(_product_text(product))
 
     return _embedding_cache
 
