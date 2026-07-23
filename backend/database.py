@@ -13,7 +13,14 @@ DATABASE_URL = get_database_url()
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
+    pool_size=5,
+    max_overflow=2,
+    pool_timeout=10,
+    connect_args=(
+        {"check_same_thread": False}
+        if "sqlite" in DATABASE_URL
+        else {"connect_timeout": 10}
+    ),
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

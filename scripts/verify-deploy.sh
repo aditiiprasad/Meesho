@@ -5,7 +5,18 @@ set -euo pipefail
 FRONTEND="${1:-https://meesho-beige-three.vercel.app}"
 BACKEND="${2:-https://meesho-backend-wgsi.onrender.com}"
 
-echo "==> Checking backend: $BACKEND"
+echo "==> Checking backend ping (no DB): $BACKEND"
+PING=$(curl -s -m 60 "$BACKEND/api/ping" || true)
+if echo "$PING" | grep -q '"status":"ok"'; then
+  echo "OK  /api/ping"
+else
+  echo "FAIL /api/ping — open Render dashboard → Manual Deploy → Restart, or service may be waking (free tier)"
+  echo "$PING"
+  exit 1
+fi
+
+echo ""
+echo "==> Checking backend health (DB): $BACKEND"
 HEALTH=$(curl -s -m 90 "$BACKEND/api/health" || true)
 if echo "$HEALTH" | grep -q '"status":"ok"'; then
   echo "OK  /api/health"
