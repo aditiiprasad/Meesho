@@ -24,18 +24,21 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 from PIL import Image
 import redis.asyncio as redis
-import cloudinary
-import cloudinary.uploader
-def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
-    na, nb = np.linalg.norm(a), np.linalg.norm(b)
-    if na == 0 or nb == 0:
-        return 0.0
-    return float(np.dot(a, b) / (na * nb))
 
 from demo_config import LOCAL_DEMO, USE_GEMINI_EMBEDDINGS
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Product, WaitingProduct, AdGroup, AdStatus, AdType, Seller
+
+# cloudinary is imported lazily inside generate_combo_ad (production upload only)
+# to keep startup light — Gemini's google libs are also imported lazily where used.
+
+
+def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if na == 0 or nb == 0:
+        return 0.0
+    return float(np.dot(a, b) / (na * nb))
 
 # --- Stage config: templates (Layer 2), audience map (Layer 4), weights (Layers 3–6) ---
 TEMPLATES = {
@@ -530,6 +533,7 @@ async def generate_combo_ad(trio_ids, trio_budgets, template_name: str = "Jodi")
             await broadcast_log("[Creative Compositor] Ad image saved locally (local demo).")
         else:
             try:
+                import cloudinary.uploader
                 upload_result = cloudinary.uploader.upload(img_bytes, folder="meesho-ads")
                 final_image_url = upload_result['secure_url']
                 await broadcast_log("[Creative Compositor] Ad image uploaded to Cloudinary.")
