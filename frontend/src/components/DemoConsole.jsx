@@ -133,9 +133,13 @@ export default function DemoConsole() {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 2000);
+    // Poll faster while the console is open, slower otherwise; skip when tab hidden
+    // to avoid hammering the backend connection pool from background tabs.
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchStatus();
+    }, isOpen ? 3000 : 8000);
     return () => clearInterval(interval);
-  }, [fetchStatus]);
+  }, [fetchStatus, isOpen]);
 
   const showToast = (msg) => {
     setToast(msg);

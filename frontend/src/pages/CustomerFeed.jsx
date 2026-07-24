@@ -159,7 +159,9 @@ export default function CustomerFeed() {
       .catch(err => console.error("Failed to fetch combo ad", err));
     };
     fetchCombo();
-    const interval = setInterval(fetchCombo, 5000);
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchCombo();
+    }, 6000);
     return () => clearInterval(interval);
   }, [navigate]);
 

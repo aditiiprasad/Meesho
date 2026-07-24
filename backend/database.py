@@ -22,9 +22,12 @@ DATABASE_URL = get_database_url()
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=3,
-    max_overflow=0,
-    pool_timeout=10,
+    # Bigger pool + overflow so concurrent polling (Demo Console 2s, dashboard/feed 5s,
+    # across multiple tabs) never exhausts connections. Well under Neon's limit.
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_recycle=280,  # recycle before Neon drops idle connections (~5 min)
     connect_args=(
         {"check_same_thread": False}
         if "sqlite" in DATABASE_URL

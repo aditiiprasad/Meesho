@@ -95,7 +95,9 @@ export default function SellerDashboard() {
  const fetchMetrics = refreshDashboard;
 
  fetchMetrics();
- const interval = setInterval(refreshDashboard, 5000);
+ const interval = setInterval(() => {
+  if (!document.hidden) refreshDashboard();
+ }, 6000);
  return () => clearInterval(interval);
  }, [navigate, user?.id]);
 
