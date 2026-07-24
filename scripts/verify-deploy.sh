@@ -3,7 +3,7 @@
 set -euo pipefail
 
 FRONTEND="${1:-https://meesho-beige-three.vercel.app}"
-BACKEND="${2:-https://meesho-backend-wgsi.onrender.com}"
+BACKEND="${2:-https://meesho-5iqg.onrender.com}"
 
 echo "==> Checking backend ping (no DB): $BACKEND"
 PING=$(curl -s -m 60 "$BACKEND/api/ping" || true)

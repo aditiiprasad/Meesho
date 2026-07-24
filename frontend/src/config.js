@@ -3,7 +3,7 @@
  * - Local: frontend/.env.local → http://127.0.0.1:8000
  * - Production: VITE_API_URL at Vercel build time, or fallback below
  */
-const PRODUCTION_API = 'https://meesho-backend-wgsi.onrender.com';
+const PRODUCTION_API = 'https://meesho-5iqg.onrender.com';
 const LOCAL_API = 'http://127.0.0.1:8000';
 
 export const API_URL =

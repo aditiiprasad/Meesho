@@ -97,9 +97,9 @@ export default function DemoRulesModal({ open, onClose }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="demo-rules-title"
-          className="relative z-10 w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[#F8F6F0] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl"
+          className="relative z-10 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden bg-[#F8F6F0] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl"
         >
-          <div className="sticky top-0 z-10 bg-[#095955] border-b-[4px] border-black px-6 py-5 flex items-start justify-between gap-4">
+          <div className="shrink-0 bg-[#095955] border-b-[4px] border-black px-6 py-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mb-1">System flow</p>
               <h2
@@ -121,7 +121,7 @@ export default function DemoRulesModal({ open, onClose }) {
             </button>
           </div>
 
-          <div className="px-4 sm:px-8 py-6">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6">
             {/* Main vertical flowchart */}
             <div className="max-w-xl mx-auto flex flex-col items-center">
               <FlowNode
@@ -312,7 +312,7 @@ export default function DemoRulesModal({ open, onClose }) {
             </div>
           </div>
 
-          <div className="sticky bottom-0 border-t-[4px] border-black bg-white px-6 py-4 flex justify-end">
+          <div className="shrink-0 border-t-[4px] border-black bg-white px-6 py-4 flex justify-end">
             <button
               type="button"
               onClick={onClose}

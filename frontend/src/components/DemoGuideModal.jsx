@@ -75,9 +75,9 @@ export default function DemoGuideModal({ open, onClose }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="demo-guide-title"
-          className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl"
+          className="relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl"
         >
-          <div className="sticky top-0 z-10 bg-[#F47216] border-b-[4px] border-black px-6 py-5 flex items-start justify-between gap-4">
+          <div className="shrink-0 bg-[#F47216] border-b-[4px] border-black px-6 py-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[#410F29]/80 mb-1">
                 Judge walkthrough
@@ -103,7 +103,7 @@ export default function DemoGuideModal({ open, onClose }) {
             </button>
           </div>
 
-          <div className="px-6 py-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
             <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-wider">
               <span className="px-2 py-1 bg-gray-100 border-2 border-black rounded-lg flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" /> Waiting
@@ -159,7 +159,7 @@ export default function DemoGuideModal({ open, onClose }) {
             </div>
           </div>
 
-          <div className="sticky bottom-0 border-t-[4px] border-black bg-white px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
+          <div className="shrink-0 border-t-[4px] border-black bg-white px-6 py-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
             <button
               type="button"
               onClick={onClose}

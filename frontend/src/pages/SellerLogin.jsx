@@ -68,7 +68,7 @@ export default function SellerLogin() {
 
   {API_MISCONFIGURED && (
    <div className="text-[#410F29] text-xs text-center font-black uppercase tracking-wider bg-yellow-100 p-3 rounded-xl border-[2px] border-yellow-600">
-    Deploy config: set VITE_API_URL=https://meesho-backend-wgsi.onrender.com in Vercel and redeploy.
+    Deploy config: set VITE_API_URL=https://meesho-5iqg.onrender.com in Vercel and redeploy.
    </div>
   )}
 
